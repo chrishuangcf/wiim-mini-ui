@@ -1,0 +1,34 @@
+{
+    "name": "@wiim_mini_ui/wiim_server",
+    "version": "0.0.1",
+    "private": true,
+    "scripts": {
+        "serve": "node server.js"
+    },
+    "dependencies": {},
+    "devDependencies": {
+        "express": "^4.18.1",
+        "upnp-device-client": "^1.0.2",
+        "xml2js": "^0.4.23"
+    },
+    "eslintConfig": {
+        "root": true,
+        "env": {
+            "node": true
+        },
+        "extends": [
+            "plugin:vue/vue3-essential",
+            "eslint:recommended"
+        ],
+        "parserOptions": {
+            "parser": "@babel/eslint-parser"
+        },
+        "rules": {}
+    },
+    "browserslist": [
+        "> 1%",
+        "last 2 versions",
+        "not dead",
+        "not ie 11"
+    ]
+}
