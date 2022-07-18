@@ -11,7 +11,8 @@
         "ui": "yarn workspace @wiim_mini_ui/web_client",
         "server": "yarn workspace @wiim_mini_ui/wiim_server",
         "build": "yarn ui build",
-        "serve": "yarn build && cp -R ./web_client/dist ./wiim_server/public && yarn server serve"
+        "serve": "rm -rf ./wiim_server/public && cp -R ./web_client/dist ./wiim_server/public && yarn server serve",
+        "serve:ui": "yarn build && yarn serve"
     },
     "repository": "git+https://github.com/chrishuangcf/wiim-mini-ui.git",
     "author": "Chris Huang",
