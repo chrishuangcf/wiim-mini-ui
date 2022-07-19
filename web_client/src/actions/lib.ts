@@ -10,15 +10,16 @@ export type metadataType = {
     songBitrate: number,
     artist: string,
     album: string,
-    biography: string
-}
-
-export type detailsDataType = {
-    biography: string
+    biography: string,
+    streamSource: string
 }
 
 export type playerType = {
     status: string
+}
+
+export type details = {
+    biography: string
 }
 
 export class MetadataLib {
@@ -27,9 +28,7 @@ export class MetadataLib {
     private player: playerType = {
         status: 'PAUSED_PLAYBACK'
     }
-    private detailsData: detailsDataType = {
-        biography: 'default biography'
-    }
+    private biography: string = 'default biography'
     private defaultData: metadataType = {
         albumArtist: '',
         albumTitle: '',
@@ -42,7 +41,8 @@ export class MetadataLib {
         songBitrate: 0,
         artist: '',
         album: '',
-        biography: ''
+        biography: '',
+        streamSource: ''
     }
 
     constructor() {}
@@ -111,23 +111,52 @@ export class MetadataLib {
             .then((response) => {
                 return response.json()
             })
-            .then((data: string) => {
+            .then((data: details) => {
+                console.log('BIO', data)
                 this.updateBiography(data)
             })
             .catch((err) => {
                 console.log('error: ' + err)
             })
-        return this.detailsData
-    }
+            console.log('BIO2',this.biography)
+            return this.biography
+        }
 
     audioQuality(data: any): number {
+        let returnAudioQuality = data[0]
         if (typeof data === 'string') {
             switch (data) {
                 case 'HD':
-                    this.defaultData.songDepth = 16
+                    returnAudioQuality = 16
+                case 'LOSSLESS':
+                    this.defaultData.songQuality = 'LOSSLESS (HiFi)'
             } 
+        } else {
+            if (data[0] > 24) {
+                returnAudioQuality = 24
+            }
         }
-        return data[0]
+        return returnAudioQuality
+    }
+
+    bitrate(data: any): number {
+        if (!isNaN(data) && data !== undefined) {
+            const temp =  data > 1000 ? (data / 1000).toFixed(2) : data
+            return temp
+        } else {
+            return 0
+        }
+    }
+
+    streamSource(data: string): string {
+        let streamSource = ''
+        if (data.indexOf('amazon') >= 0) {
+            streamSource = 'amazon'
+        }
+        if (data.indexOf('qobuz') >= 0) {
+            streamSource = 'qobuz'
+        }
+        return streamSource
     }
 
     urlDecode(str: string): string {
@@ -136,21 +165,24 @@ export class MetadataLib {
 
     updateMetadata(data: any): metadataType {
         if (data) {
-            this.defaultData.songTitle = data['dc:title'][0]
-            this.defaultData.artist = data['upnp:artist'][0]
-            this.defaultData.albumUrl = data['upnp:albumArtURI'][0]
-            this.defaultData.albumTitle = data['upnp:album'][0]
-            this.defaultData.songFormat = data['song:format_s'][0]
+            this.defaultData.songTitle = data['dc:title'] ? data['dc:title'][0] : ''
+            this.defaultData.artist = data['upnp:artist'] ? data['upnp:artist'][0] : ''
+            this.defaultData.albumUrl = data['upnp:albumArtURI'] ? data['upnp:albumArtURI'][0] : ''
+            this.defaultData.albumTitle = data['upnp:album'] ? data['upnp:album'][0] : ''
+            this.defaultData.songFormat = data['song:format_s'] ? data['song:format_s'][0] : ''
             this.defaultData.songDepth = this.audioQuality(data['song:format_s'])
-            this.defaultData.songQuality = data['song:actualQuality'][0]
-            this.defaultData.songRate = data['song:rate_hz'][0] / 1000.0
-            this.defaultData.songBitrate = data['song:bitrate'][0] / 1000.0
+            this.defaultData.songQuality = data['song:actualQuality'] ? data['song:actualQuality'][0] : ''
+            this.defaultData.songRate = data['song:rate_hz'] ? this.bitrate(data['song:rate_hz'][0]) : 0
+            this.defaultData.songBitrate = data['song:bitrate'] ? data['song:bitrate'][0] : 0
+            this.defaultData.streamSource = this.streamSource(this.defaultData.albumUrl)
         }
         return this.defaultData
     }
-
-    updateBiography(data: string) {
-        this.detailsData.biography = data
-        return this.detailsData
+    updateBiography = (data: details) => {
+        if (data.biography !== 'no data') {
+            this.biography = data.biography    
+        } else {
+            this.biography = ''
+        }
     }
 }

@@ -1,10 +1,9 @@
 <template>
-  <v-card
-    color="transparent"
-    flat
-    tile
-  >
-    <v-toolbar collapse>
+    <v-toolbar
+      color="black accent-4"
+      dark
+      prominent
+    >
       <v-btn icon>
         <v-icon>mdi-skip-previous</v-icon>
       </v-btn>
@@ -14,12 +13,12 @@
       <v-btn icon v-if="playerStatus === 'PLAYING'">
         <v-icon>mdi-pause</v-icon>
       </v-btn>
-
+      
       <v-btn icon>
         <v-icon>mdi-skip-next</v-icon>
       </v-btn>
+      <v-spacer></v-spacer>
     </v-toolbar>
-  </v-card>
 </template>
 
 <script lang="ts">

@@ -20,32 +20,8 @@ import HomeView from './views/HomeView.vue'
         data: () => ({}),
         components: { HomeView },
         beforeUnmount: () => {},
-        mounted: async () => {
-                // console.log("App mounted!");
-
-                // this.reader.addEventListener("load", () => {
-                //     this.importedExpectationArray = JSON.parse(this.reader.result?.toString() || "")?.routes;
-                // }, false);
-
-                // this.userip = await fetchUserIpAddress();
-        },
+        mounted: async () => {},
         computed: {},
-        methods: {
-            // startProxy: async function () {
-            //     this.assignedPort = await sendProxyRequest();
-            // },
-            // stopProxy: async function () {
-            //     await sendProxyStop(this.assignedPort);
-            //     this.assignedPort = 0;
-            // },
-            // loadJson: async function (event: any) {
-            //     const fileList = event.target.files;
-            //     console.log(fileList);
-            //     this.reader.readAsText(fileList[0]);
-            // },
-            // clearJson: async function (event: any) {
-            //     this.importedExpectationArray = [];
-            // }
-        }
+        methods: {}
     }
 </script>
