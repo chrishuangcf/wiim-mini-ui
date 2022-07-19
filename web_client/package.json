@@ -4,7 +4,7 @@
     "private": true,
     "scripts": {
         "dev": "vite",
-        "build": "run-p type-check build-only",
+        "build": "run-p build-only",
         "serve": "vite preview --port 3000",
         "build-only": "vite build",
         "type-check": "vue-tsc --noEmit",

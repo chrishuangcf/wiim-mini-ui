@@ -43,42 +43,38 @@
     props: ['song', 'streamSource', 'songDepth', 'songRate', 'songBitrate', 'songQuality'],
     data: () => ({
       logoImgUrl: '',
-      qualityImgUrl: ''
+      qualityImgUrl: '',
+      timer: ''
     }),
     create () {},
     mounted: function () {},
     watch: {
       song(val) {
         if (val) {
-          this.updateLogoImg()
-          this.updateQualityImg()
+          // event trigger to update
+          console.log('TRIGGERED')
+          this.timer = setTimeout(this.updateSongSpecs(), 5000)
         }
       }
     },
     methods: {
-      updateQualityImg() {
+      updateSongSpecs () {
         if (this.streamSource) {
+          console.log('UPDATE_QUT', this.streamSource)
           switch (this.streamSource) {
             case 'qobuz':
-              this.qualityImgUrl = (this.songDepth > 16 && this.songRate > 45) ? hiresLogo : cdLogo
+              this.qualityImgUrl = (this.songDepth > 16) ? hiresLogo : cdLogo
+              this.logoImgUrl = qobuzLogo
+              console.log('QOBUZ', this.songDepth, this.qualityImgUrl, (this.songDepth > 16))
             break
-            case 'amazon':
-              this.qualityImgUrl = this.songQuality === 'UHD' ? uhdLogo : hdLogo
-            break
-          }
-        }
-      },
-      updateLogoImg() {
-        if (this.streamSource) {
-          switch (this.streamSource) {
             case 'amazon':
               this.logoImgUrl = amazonLogo
-            break
-            case 'qobuz':
-              this.logoImgUrl = qobuzLogo
+              this.qualityImgUrl = this.songQuality === 'UHD' ? uhdLogo : hdLogo
+              console.log('QOBUZ', this.songDepth, this.songQuality, this.qualityImgUrl)
             break
           }
         }
+        this.timer = ''
       },
     }
   }
@@ -87,13 +83,4 @@
   .songSpecsContainer {
     border: 1px #546E7A solid;
   }
-    /* .streamServiceLogo {
-      border: 1px red solid;
-    }
-    .streamQualityLogo {
-      border: 1px red solid;
-    } */
-    /* .songSpecs {
-      border: 1px red solid;
-    } */
 </style>

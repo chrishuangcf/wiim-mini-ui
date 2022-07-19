@@ -92,6 +92,24 @@ export class MetadataLib {
         return this.player
     }
 
+    postPlayerActions(playerAction: string) {
+        let headers = {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        }
+
+        fetch(`${this.serverUrl}/actions/`, {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify({
+                player: playerAction
+            })
+        })
+        .catch((err) => {
+            console.log('error: ' + err)
+        })
+    }
+
     async fetchBiography() {
         const artist = this.urlDecode(this.defaultData.artist)
         const album = this.urlDecode(this.defaultData.albumTitle)
@@ -99,6 +117,11 @@ export class MetadataLib {
         let headers = {
             'Accept': 'application/json',
             'Content-Type': 'application/json'
+        }
+        
+        // handle extreme cases when unexpected search results happened
+        if(artist === 'Various%20Artists') {
+            return ''
         }
 
         await fetch(`${this.serverUrl}/biography/`, {
@@ -112,28 +135,24 @@ export class MetadataLib {
                 return response.json()
             })
             .then((data: details) => {
-                console.log('BIO', data)
                 this.updateBiography(data)
             })
             .catch((err) => {
                 console.log('error: ' + err)
             })
-            console.log('BIO2',this.biography)
             return this.biography
         }
 
     audioQuality(data: any): number {
-        let returnAudioQuality = data[0]
-        if (typeof data === 'string') {
-            switch (data) {
-                case 'HD':
-                    returnAudioQuality = 16
-                case 'LOSSLESS':
-                    this.defaultData.songQuality = 'LOSSLESS (HiFi)'
-            } 
-        } else {
-            if (data[0] > 24) {
+        let returnAudioQuality = data
+        if (!isNaN(returnAudioQuality)) {
+            if (data > 24) {
                 returnAudioQuality = 24
+            }
+        }
+        if (this.defaultData.streamSource === 'amazon') {
+            if (this.defaultData.songQuality === 'HD') {
+                returnAudioQuality = 16
             }
         }
         return returnAudioQuality
@@ -170,7 +189,7 @@ export class MetadataLib {
             this.defaultData.albumUrl = data['upnp:albumArtURI'] ? data['upnp:albumArtURI'][0] : ''
             this.defaultData.albumTitle = data['upnp:album'] ? data['upnp:album'][0] : ''
             this.defaultData.songFormat = data['song:format_s'] ? data['song:format_s'][0] : ''
-            this.defaultData.songDepth = this.audioQuality(data['song:format_s'])
+            this.defaultData.songDepth = data['song:format_s'] ? this.audioQuality(data['song:format_s'][0]) : 0
             this.defaultData.songQuality = data['song:actualQuality'] ? data['song:actualQuality'][0] : ''
             this.defaultData.songRate = data['song:rate_hz'] ? this.bitrate(data['song:rate_hz'][0]) : 0
             this.defaultData.songBitrate = data['song:bitrate'] ? data['song:bitrate'][0] : 0

@@ -4,20 +4,17 @@
       dark
       prominent
     >
-      <v-btn icon>
-        <v-icon>mdi-skip-previous</v-icon>
-      </v-btn>
-      <v-btn icon v-if="playerStatus === 'PAUSED_PLAYBACK'">
+      <v-btn icon v-if="playerStatus === 'PAUSED_PLAYBACK'" v-on:click="handleClick('Play')">
         <v-icon>mdi-play</v-icon>
       </v-btn>
-      <v-btn icon v-if="playerStatus === 'PLAYING'">
+      <v-btn icon v-if="playerStatus === 'PLAYING'" v-on:click="handleClick('Pause')">
         <v-icon>mdi-pause</v-icon>
-      </v-btn>
-      
+      </v-btn> 
       <v-btn icon>
-        <v-icon>mdi-skip-next</v-icon>
+        <v-icon v-on:click="handleClick('Next')">mdi-skip-next</v-icon>
       </v-btn>
       <v-spacer></v-spacer>
+      {{playerStatus}}
     </v-toolbar>
 </template>
 
@@ -31,6 +28,9 @@
     watch: {
     },
     methods: {
+      handleClick(action: string) {
+        this.$emit('player', action)
+      }
     }
   }
 </script>
