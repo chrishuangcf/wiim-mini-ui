@@ -24,13 +24,6 @@ var client = new Client(
     `http://${WIIM_MINI_URL}:${WIIM_MINI_PORT}/${WIIM_MINI_PATRH}`
 );
 
-// Get the device description
-client.getDeviceDescription((err, description) => {
-    if (err) throw err;
-    // console.log('DESCRIPTION')
-    // console.log(description)
-});
-
 // client.unsubscribe('AVTransport', listener);
 
 app.use(express.static(__dirname + "/public"));
@@ -45,20 +38,34 @@ app.use((req, res, next) => {
     );
     next();
 });
-app.get("/data", (req, res, next) => {
+app.get("/description", (req, res, next) => {
+    // Get the device description
+    client.getDeviceDescription((err, description) => {
+        if (err) console.log(err);
+        res.json({
+            deviceType: description.deviceType,
+            friendlyName: description.friendlyName,
+        });
+    });
+});
+
+app.get("/metadata", (req, res, next) => {
     client.callAction(
         "AVTransport",
         "GetMediaInfo", { InstanceID: 0 },
-        function(err, result) {
+        (err, result) => {
             if (err) throw err;
             const metaData = result.CurrentURIMetaData;
 
-            const metaReq = xml2js.parseString(metaData, (err, metadataJson) => {
-                if (err) {
-                    throw err;
-                }
-                returnMetaData = metadataJson["DIDL-Lite"]["item"][0];
-            });
+            if (metaData) {
+                const metaReq = xml2js.parseString(metaData, (err, metadataJson) => {
+                    if (err) {
+                        throw err;
+                    }
+
+                    returnMetaData = metadataJson["DIDL-Lite"]["item"][0];
+                });
+            }
         }
     );
     res.send(returnMetaData);

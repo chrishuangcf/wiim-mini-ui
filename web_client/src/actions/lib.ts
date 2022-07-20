@@ -29,6 +29,22 @@ export class MetadataLib {
   }
 
   fetchDeviceInfo() {
+    // let result = {};
+    // fetch(`${this.serverUrl}/description/`)
+    //   .then((response) => {
+    //     return response.json();
+    //   })
+    //   .then((data) => {
+    //     result = data;
+    //   })
+    //   .catch((err) => {
+    //     console.log("error: " + err);
+    //   });
+    // return result;
+    return {};
+  }
+
+  fetchMetadata() {
     fetch(`${this.serverUrl}/metadata/`)
       .then((response) => {
         return response.json();
@@ -150,6 +166,9 @@ export class MetadataLib {
     }
     if (data.indexOf("qobuz") >= 0) {
       streamSource = "qobuz";
+    }
+    if (data.indexOf("i.scdn.co") >= 0) {
+      streamSource = "spotify";
     }
     return streamSource;
   }

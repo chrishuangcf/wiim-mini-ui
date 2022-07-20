@@ -1,5 +1,5 @@
 <template>
-  <v-card color="#263238">
+  <v-card color="#212121" class="overflow-y-auto" max-height="200">
     <v-card-text>
       <p class="text--primary">
         {{ bioText }}
@@ -54,12 +54,7 @@ const lib = new MetadataLib();
 export default {
   name: "Biography",
   props: ["bioText", "artist"],
-  data: () => ({
-    artistBio: "",
-    toggles: {
-      bio: false,
-    },
-  }),
+  data: () => ({}),
   create() {},
   mounted: function () {},
   watch: {},

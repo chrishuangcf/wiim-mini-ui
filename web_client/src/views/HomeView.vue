@@ -28,20 +28,12 @@ import Biography from "@/components/Biography.vue";
                     </p>
                   </v-card-text>
                   <v-card-text>
-                    <v-btn
-                      rounded="lg"
-                      color="#37474F"
-                      v-on:click="fetchArtistBio"
-                    >
+                    <v-btn rounded="lg" color="#37474F" v-on:click="toggleBio">
                       {{ metadata.artist }}
                     </v-btn>
                   </v-card-text>
                   <v-card-text v-if="toggles.bio">
-                    <Biography
-                      :bioText="artistBio"
-                      :song="metadata.songTitle"
-                      :artist="metadata.artist"
-                    />
+                    <Biography :bioText="artistBio" :artist="metadata.artist" />
                   </v-card-text>
                 </v-card>
                 <SongSpecs
@@ -88,6 +80,7 @@ export default {
         status: "PAUSED_PLAYBACK",
       },
       artistBio: "",
+      currentArtist: "",
       toggles: {
         bio: false,
       },
@@ -96,18 +89,30 @@ export default {
   },
   components: { ToolBar, AlbumArt, SongSpecs, Biography },
   created() {
-    this.fetchData();
-    this.timer = setInterval(this.fetchData, 1000);
+    this.fetchDeviceInfo();
+    this.fetchMetadata();
+    this.fetchPlayerStatus();
+    this.timer = setInterval(this.fetchRefreshData, 1000);
   },
   mounted: () => {},
-  watch: {},
+  watch: {
+    currentArtist: {
+      immediate: true,
+      handler(newValue, oldValue) {
+        this.fetchArtistBio();
+      },
+    },
+  },
   methods: {
-    fetchData: async function () {
-      await this.fetchDeviceInfo();
+    fetchDeviceInfo: async function () {
+      await lib.fetchDeviceInfo();
+    },
+    fetchRefreshData: async function () {
+      await this.fetchMetadata();
       await this.fetchPlayerStatus();
     },
-    fetchDeviceInfo: async function () {
-      const data = await lib.fetchDeviceInfo();
+    fetchMetadata: async function () {
+      const data = await lib.fetchMetadata();
       this.metadata = {
         albumArtist: data.albumArtist || "",
         albumTitle: data.albumTitle || "",
@@ -122,20 +127,19 @@ export default {
         album: data.album || "",
         streamSource: data.streamSource || "",
       };
+      this.currentArtist = this.metadata.artist;
+      this.currentSong = this.metadata.songTitle;
     },
     fetchArtistBio: async function () {
-      this.toggles.bio = !this.toggles.bio;
-
-      if (this.toggles.bio === true) {
-        this.artistBio = await lib.fetchBiography();
-      } else {
-        this.artistBio = "";
-      }
+      this.artistBio = await lib.fetchBiography();
     },
     fetchPlayerStatus: async function () {
       this.player = await lib.fetchPlayerStatus("status").status;
     },
-    postActions: function (action: string) {
+    toggleBio: async function () {
+      this.toggles.bio = !this.toggles.bio;
+    },
+    postActions: (action: string) => {
       lib.postPlayerActions(action);
     },
     cancelAutoUpdate() {
