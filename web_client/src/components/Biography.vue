@@ -1,9 +1,10 @@
 <template>
-  <v-card color="#212121" class="overflow-y-auto" max-height="170">
+  <v-card color="#CFD8DC">
+    <v-card-title>
+      {{ artist }}
+    </v-card-title>
     <v-card-text>
-      <p class="text--primary">
-        {{ bioText }}
-      </p>
+      {{ bioText }}
     </v-card-text>
     <v-card-text>
       <p

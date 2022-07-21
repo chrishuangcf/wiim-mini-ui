@@ -1,22 +1,24 @@
 <template>
-  <v-toolbar color="black accent-4" dark prominent>
-    <v-btn
-      icon
-      v-if="playerStatus === 'PAUSED_PLAYBACK'"
-      v-on:click="handleClick('Play')"
-    >
-      <v-icon>mdi-play</v-icon>
-    </v-btn>
-    <v-btn
-      icon
-      v-if="playerStatus === 'PLAYING'"
-      v-on:click="handleClick('Pause')"
-    >
-      <v-icon>mdi-pause</v-icon>
-    </v-btn>
-    <v-btn icon>
-      <v-icon v-on:click="handleClick('Next')">mdi-skip-next</v-icon>
-    </v-btn>
+  <v-toolbar color="#424242" dark prominent>
+    <v-btn-toggle rounded="xl" class="py-2" color="#607D8B" dark>
+      <v-btn
+        icon
+        v-if="playerStatus === 'PAUSED_PLAYBACK'"
+        v-on:click="handleClick('Play')"
+      >
+        <v-icon>mdi-play</v-icon>
+      </v-btn>
+      <v-btn
+        icon
+        v-if="playerStatus === 'PLAYING'"
+        v-on:click="handleClick('Pause')"
+      >
+        <v-icon>mdi-pause</v-icon>
+      </v-btn>
+      <v-btn icon>
+        <v-icon v-on:click="handleClick('Next')">mdi-skip-next</v-icon>
+      </v-btn>
+    </v-btn-toggle>
     <v-spacer></v-spacer>
     {{ playerStatus }} on {{ playerName }}
   </v-toolbar>

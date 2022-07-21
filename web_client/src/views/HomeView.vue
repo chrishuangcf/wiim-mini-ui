@@ -7,56 +7,65 @@ import type { deviceType } from "./actions/types";
 </script>
 
 <template>
-  <v-card class="mx-auto">
-    <v-container fluid>
-      <v-row dense>
-        <v-col cols="12">
-          <v-card color="#424242" theme="dark">
-            <div class="d-flex flex-no-wrap justify-space-between">
-              <v-col cols="6">
-                <v-avatar size="100%" rounded="0">
-                  <AlbumArt :imgUrl="metadata.albumUrl" />
-                </v-avatar>
-              </v-col>
-              <v-col cols="6">
-                <v-card color="#263238">
-                  <v-card-title class="text-h4 text--primary">
+  <v-container fluid>
+    <v-row dense>
+      <v-col cols="12">
+        <v-card color="#263238" theme="dark">
+          <div class="d-flex flex-row justify-space-around">
+            <v-col cols="5">
+              <AlbumArt :imgUrl="metadata.albumUrl" />
+            </v-col>
+            <v-col cols="7">
+              <v-card color="#212121" height="100%">
+                <v-card-title class="text-h4 text--primary text-wrap">
+                  <div class="text-h5 text--primary">
                     {{ metadata.songTitle }}
-                  </v-card-title>
-                  <v-card-text>
-                    <p class="text-h5 text--primary">
-                      {{ metadata.albumTitle }}
-                    </p>
-                  </v-card-text>
-                  <v-card-text>
-                    <v-btn rounded="lg" color="#37474F" v-on:click="toggleBio">
-                      {{ metadata.artist }}
-                    </v-btn>
-                  </v-card-text>
-                  <v-card-text v-if="toggles.bio">
-                    <Biography :bioText="artistBio" :artist="metadata.artist" />
-                  </v-card-text>
-                </v-card>
-                <SongSpecs
-                  :song="metadata.songTitle"
-                  :streamSource="metadata.streamSource"
-                  :songDepth="metadata.songDepth"
-                  :songRate="metadata.songRate"
-                  :songBitrate="metadata.songBitrate"
-                  :songQuality="metadata.songQuality"
+                  </div>
+                  <v-divider insert thickness="1" />
+                  <div class="text-h6 text--primary">
+                    {{ metadata.albumTitle }}
+                  </div>
+                </v-card-title>
+                <v-card-subtitle>
+                  <p>
+                    <SongSpecs
+                      :song="metadata.songTitle"
+                      :streamSource="metadata.streamSource"
+                      :songDepth="metadata.songDepth"
+                      :songRate="metadata.songRate"
+                      :songBitrate="metadata.songBitrate"
+                      :songQuality="metadata.songQuality"
+                    /></p
+                ></v-card-subtitle>
+
+                <v-card-text>
+                  <v-btn
+                    rounded="lg"
+                    color="#EA80FC"
+                    v-on:click="toggleBio"
+                    style="text-overflow: ellipsis"
+                  >
+                    {{ displayArtistShortName }}
+                  </v-btn>
+                </v-card-text>
+                <ToolBar
+                  :playerStatus="playerStatus"
+                  :playerName="playerName"
+                  @player="postActions"
+                  color="#424242"
+                  style="position: absolute; bottom: 0px; width: 100%"
                 />
-              </v-col>
-            </div>
-          </v-card>
-          <ToolBar
-            :playerStatus="playerStatus"
-            :playerName="playerName"
-            @player="postActions"
-          />
-        </v-col>
-      </v-row>
-    </v-container>
-  </v-card>
+              </v-card>
+            </v-col>
+          </div>
+        </v-card>
+
+        <v-card color="#37474F" v-if="toggles.bio">
+          <Biography :bioText="artistBio" :artist="metadata.artist" />
+        </v-card>
+      </v-col>
+    </v-row>
+  </v-container>
 </template>
 
 <script lang="ts">
@@ -85,6 +94,7 @@ export default {
       playerName: "",
       artistBio: "",
       currentArtist: "",
+      displayArtistShortName: "",
       toggles: {
         bio: false,
       },
@@ -134,12 +144,19 @@ export default {
       };
       this.currentArtist = this.metadata.artist;
       this.currentSong = this.metadata.songTitle;
+      this.displayArtistShortName = this.displayShortName(this.metadata.artist);
     },
     fetchArtistBio: async function () {
       this.artistBio = await lib.fetchBiography();
     },
     fetchPlayerStatus: async function () {
       this.playerStatus = await lib.fetchPlayerStatus("status").status;
+    },
+    displayShortName: function (artist: string) {
+      if (artist.length > 50) {
+        this.displayArtistShortName = artist.substring(0, 50);
+        return this.displayArtistShortName;
+      }
     },
     toggleBio: async function () {
       this.toggles.bio = !this.toggles.bio;

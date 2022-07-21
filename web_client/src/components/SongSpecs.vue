@@ -10,33 +10,29 @@ import mp3Logo from "@/assets/mp3.png";
 </script>
 
 <template>
-  <v-card color="#242838">
-    <v-card-text class="songSpecsContainer">
-      <v-row dense>
-        <v-col cols="2">
-          <v-img
-            :src="`${logoImgUrl}`"
-            height="20"
-            v-if="logoImgUrl"
-            class="streamServiceLogo"
-          ></v-img>
-        </v-col>
-        <v-col cols="8">
-          <p class="text--primary songSpecs">
-            {{ songDepth }} bits / {{ songRate }} kHz
-          </p>
-        </v-col>
-        <v-col cols="2">
-          <v-img
-            :src="`${qualityImgUrl}`"
-            height="20"
-            v-if="qualityImgUrl"
-            class="streamQualityLogo"
-          ></v-img>
-        </v-col>
-      </v-row>
-    </v-card-text>
-  </v-card>
+  <v-row>
+    <v-col cols="2">
+      <v-img
+        :src="`${logoImgUrl}`"
+        height="20"
+        v-if="logoImgUrl"
+        class="streamServiceLogo"
+      ></v-img>
+    </v-col>
+    <v-col cols="2">
+      <v-img
+        :src="`${qualityImgUrl}`"
+        height="20"
+        v-if="qualityImgUrl"
+        class="streamQualityLogo"
+      ></v-img>
+    </v-col>
+    <v-col cols="8">
+      <p class="text--primary songSpecs">
+        {{ songDepth }} bits / {{ songRate }} kHz
+      </p>
+    </v-col>
+  </v-row>
 </template>
 
 <script lang="ts">
@@ -113,8 +109,3 @@ export default {
   },
 };
 </script>
-<style>
-.songSpecsContainer {
-  border: 1px #546e7a solid;
-}
-</style>
