@@ -21,3 +21,8 @@ export type playerType = {
 export type detailsType = {
   biography: string;
 };
+
+export type deviceType = {
+  deviceType: string;
+  friendlyName: string;
+};

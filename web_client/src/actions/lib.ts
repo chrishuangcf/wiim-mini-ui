@@ -1,10 +1,16 @@
-import type { metadataType, playerType, detailsType } from "./types";
+import type {
+  metadataType,
+  playerType,
+  detailsType,
+  deviceType,
+} from "./types";
 export class MetadataLib {
   // private deviceUrl: string
   private serverUrl: string = "http://10.0.4.31:8080";
   private player: playerType = {
     status: "PAUSED_PLAYBACK",
   };
+  private deviceInfo: deviceType = { deviceType: "", friendlyName: "" };
   private biography: string = "default biography";
   private defaultData: metadataType = {
     albumArtist: "",
@@ -29,19 +35,17 @@ export class MetadataLib {
   }
 
   fetchDeviceInfo() {
-    // let result = {};
-    // fetch(`${this.serverUrl}/description/`)
-    //   .then((response) => {
-    //     return response.json();
-    //   })
-    //   .then((data) => {
-    //     result = data;
-    //   })
-    //   .catch((err) => {
-    //     console.log("error: " + err);
-    //   });
-    // return result;
-    return {};
+    fetch(`${this.serverUrl}/description/`)
+      .then((response) => {
+        return response.json();
+      })
+      .then((data) => {
+        this.deviceInfo = this.updateDeviceInfo(data);
+      })
+      .catch((err) => {
+        console.log("error: " + err);
+      });
+    return this.deviceInfo;
   }
 
   fetchMetadata() {
@@ -104,7 +108,13 @@ export class MetadataLib {
 
   async fetchBiography() {
     const artist = this.urlDecode(this.defaultData.artist);
-    const album = this.urlDecode(this.defaultData.albumTitle);
+    // const album = this.urlDecode(this.defaultData.albumTitle);
+
+    const storedData = localStorage.getItem(artist);
+    if (storedData) {
+      this.biography = storedData;
+      return this.biography;
+    }
 
     let headers = {
       Accept: "application/json",
@@ -127,7 +137,12 @@ export class MetadataLib {
         return response.json();
       })
       .then((data: detailsType) => {
-        this.updateBiography(data);
+        if (data.biography !== "no data") {
+          localStorage.setItem(artist, data.biography);
+          this.biography = data.biography;
+        } else {
+          this.biography = "";
+        }
       })
       .catch((err) => {
         console.log("error: " + err);
@@ -177,6 +192,13 @@ export class MetadataLib {
     return encodeURIComponent(str);
   }
 
+  updateDeviceInfo(data: deviceType) {
+    if (data.deviceType.indexOf("MediaRenderer") >= 0) {
+      data.deviceType = "Media Renderer";
+    }
+    return data;
+  }
+
   updateMetadata(data: any): metadataType {
     if (data) {
       this.defaultData.songTitle = data["dc:title"] ? data["dc:title"][0] : "";
@@ -210,11 +232,4 @@ export class MetadataLib {
     }
     return this.defaultData;
   }
-  updateBiography = (data: detailsType) => {
-    if (data.biography !== "no data") {
-      this.biography = data.biography;
-    } else {
-      this.biography = "";
-    }
-  };
 }

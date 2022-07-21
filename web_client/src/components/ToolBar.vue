@@ -18,14 +18,14 @@
       <v-icon v-on:click="handleClick('Next')">mdi-skip-next</v-icon>
     </v-btn>
     <v-spacer></v-spacer>
-    {{ playerStatus }}
+    {{ playerStatus }} on {{ playerName }}
   </v-toolbar>
 </template>
 
 <script lang="ts">
 export default {
   name: "ToolBar",
-  props: ["playerStatus"],
+  props: ["playerStatus", "playerName"],
   data: () => ({}),
   mounted: function () {},
   watch: {},

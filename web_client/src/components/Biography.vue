@@ -1,5 +1,5 @@
 <template>
-  <v-card color="#212121" class="overflow-y-auto" max-height="200">
+  <v-card color="#212121" class="overflow-y-auto" max-height="170">
     <v-card-text>
       <p class="text--primary">
         {{ bioText }}

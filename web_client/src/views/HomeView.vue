@@ -3,6 +3,7 @@ import ToolBar from "@/components/ToolBar.vue";
 import AlbumArt from "@/components/AlbumArt.vue";
 import SongSpecs from "@/components/SongSpecs.vue";
 import Biography from "@/components/Biography.vue";
+import type { deviceType } from "./actions/types";
 </script>
 
 <template>
@@ -47,7 +48,11 @@ import Biography from "@/components/Biography.vue";
               </v-col>
             </div>
           </v-card>
-          <ToolBar :playerStatus="player" @player="postActions" />
+          <ToolBar
+            :playerStatus="playerStatus"
+            :playerName="playerName"
+            @player="postActions"
+          />
         </v-col>
       </v-row>
     </v-container>
@@ -76,9 +81,8 @@ export default {
         album: "",
         streamSource: "",
       },
-      player: {
-        status: "PAUSED_PLAYBACK",
-      },
+      playerStatus: "PAUSED_PLAYBACK",
+      playerName: "",
       artistBio: "",
       currentArtist: "",
       toggles: {
@@ -89,7 +93,6 @@ export default {
   },
   components: { ToolBar, AlbumArt, SongSpecs, Biography },
   created() {
-    this.fetchDeviceInfo();
     this.fetchMetadata();
     this.fetchPlayerStatus();
     this.timer = setInterval(this.fetchRefreshData, 1000);
@@ -100,12 +103,14 @@ export default {
       immediate: true,
       handler(newValue, oldValue) {
         this.fetchArtistBio();
+        this.fetchDeviceInfo();
       },
     },
   },
   methods: {
     fetchDeviceInfo: async function () {
-      await lib.fetchDeviceInfo();
+      const data: deviceType = await lib.fetchDeviceInfo();
+      this.playerName = `${data.friendlyName} (${data.deviceType})`;
     },
     fetchRefreshData: async function () {
       await this.fetchMetadata();
@@ -134,7 +139,7 @@ export default {
       this.artistBio = await lib.fetchBiography();
     },
     fetchPlayerStatus: async function () {
-      this.player = await lib.fetchPlayerStatus("status").status;
+      this.playerStatus = await lib.fetchPlayerStatus("status").status;
     },
     toggleBio: async function () {
       this.toggles.bio = !this.toggles.bio;
