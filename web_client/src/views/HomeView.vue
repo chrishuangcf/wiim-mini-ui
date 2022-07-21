@@ -154,8 +154,9 @@ export default {
     },
     displayShortName: function (artist: string) {
       if (artist.length > 50) {
-        this.displayArtistShortName = artist.substring(0, 50);
-        return this.displayArtistShortName;
+        return artist.substring(0, 50);
+      } else {
+        return artist;
       }
     },
     toggleBio: async function () {
