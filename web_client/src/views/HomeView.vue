@@ -3,7 +3,7 @@ import ToolBar from "@/components/ToolBar.vue";
 import AlbumArt from "@/components/AlbumArt.vue";
 import SongSpecs from "@/components/SongSpecs.vue";
 import Biography from "@/components/Biography.vue";
-import type { deviceType } from "./actions/types";
+import Devices from "@/components/Devices.vue";
 </script>
 
 <template>
@@ -48,18 +48,23 @@ import type { deviceType } from "./actions/types";
                     {{ displayArtistShortName }}
                   </v-btn>
                 </v-card-text>
-                <ToolBar
-                  :playerStatus="playerStatus"
-                  :playerName="playerName"
-                  @player="postActions"
-                  color="#424242"
-                  style="position: absolute; bottom: 0px; width: 100%"
-                />
+                <div style="position: absolute; bottom: 0px; width: 100%">
+                  <Devices
+                    :deviceList="deviceList"
+                    @location="postInit"
+                    v-if="toggles.devices"
+                  />
+                  <ToolBar
+                    :playerStatus="playerStatus"
+                    @player="postActions"
+                    @showDevices="toggleDeviceList"
+                    color="#424242"
+                  />
+                </div>
               </v-card>
             </v-col>
           </div>
         </v-card>
-
         <v-card color="#37474F" v-if="toggles.bio">
           <Biography :bioText="artistBio" :artist="metadata.artist" />
         </v-card>
@@ -91,20 +96,20 @@ export default {
         streamSource: "",
       },
       playerStatus: "PAUSED_PLAYBACK",
-      playerName: "",
       artistBio: "",
       currentArtist: "",
       displayArtistShortName: "",
       toggles: {
         bio: false,
+        devices: false,
       },
+      deviceList: undefined,
       timer: 0,
     };
   },
   components: { ToolBar, AlbumArt, SongSpecs, Biography },
   created() {
-    this.fetchMetadata();
-    this.fetchPlayerStatus();
+    this.fetchDeviceList();
     this.timer = setInterval(this.fetchRefreshData, 1000);
   },
   mounted: () => {},
@@ -113,14 +118,12 @@ export default {
       immediate: true,
       handler(newValue, oldValue) {
         this.fetchArtistBio();
-        this.fetchDeviceInfo();
       },
     },
   },
   methods: {
-    fetchDeviceInfo: async function () {
-      const data: deviceType = await lib.fetchDeviceInfo();
-      this.playerName = `${data.friendlyName} (${data.deviceType})`;
+    fetchDeviceList: async function () {
+      this.deviceList = await lib.fetchDeviceList();
     },
     fetchRefreshData: async function () {
       await this.fetchMetadata();
@@ -161,6 +164,12 @@ export default {
     },
     toggleBio: async function () {
       this.toggles.bio = !this.toggles.bio;
+    },
+    toggleDeviceList: function (showDevices: boolean) {
+      this.toggles.devices = showDevices;
+    },
+    postInit: (location: string) => {
+      lib.postInit(location);
     },
     postActions: (action: string) => {
       lib.postPlayerActions(action);

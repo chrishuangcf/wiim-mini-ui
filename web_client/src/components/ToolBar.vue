@@ -1,6 +1,9 @@
 <template>
-  <v-toolbar color="#424242" dark prominent>
-    <v-btn-toggle rounded="xl" class="py-2" color="#607D8B" dark>
+  <div color="#424242" dark prominent class="justify-space-around">
+    <v-btn-toggle rounded="lg" class="py-2" color="#607D8B" dark size="xs">
+      <v-btn icon v-on:click="handleShowDevices()"
+        ><v-icon>mdi-speaker-wireless</v-icon></v-btn
+      >
       <v-btn
         icon
         v-if="playerStatus === 'PAUSED_PLAYBACK'"
@@ -20,22 +23,26 @@
       </v-btn>
     </v-btn-toggle>
     <v-spacer></v-spacer>
-    {{ playerStatus }} on {{ playerName }}
-  </v-toolbar>
+  </div>
 </template>
 
 <script lang="ts">
 export default {
   name: "ToolBar",
-  props: ["playerStatus", "playerName"],
-  data: () => ({}),
+  props: ["playerStatus"],
+  data: () => ({
+    toggle: false,
+  }),
   mounted: function () {},
   watch: {},
   methods: {
     handleClick(action: string) {
       this.$emit("player", action);
     },
+    handleShowDevices() {
+      this.toggle = !this.toggle;
+      this.$emit("showDevices", this.toggle);
+    },
   },
 };
 </script>
-// PAUSED_PLAYBACK, PLAYING, TRANSITIONING

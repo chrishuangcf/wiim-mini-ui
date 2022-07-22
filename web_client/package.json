@@ -13,6 +13,7 @@
     },
     "dependencies": {
         "core-js": "^3.8.3",
+        "node-ssdp": "^4.0.1",
         "pinia": "^2.0.14",
         "roboto-fontface": "*",
         "vue": "^3.2.13",

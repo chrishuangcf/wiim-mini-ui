@@ -22,7 +22,13 @@ export type detailsType = {
   biography: string;
 };
 
-export type deviceType = {
+export type upnpDeviceType = {
+  location: string;
   deviceType: string;
   friendlyName: string;
+  manufacturer: string;
+  ssidName: string;
+  uuid: string;
 };
+
+export type deviceListType = upnpDeviceType[];

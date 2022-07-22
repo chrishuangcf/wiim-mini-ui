@@ -2,15 +2,13 @@ import type {
   metadataType,
   playerType,
   detailsType,
-  deviceType,
+  deviceListType,
 } from "./types";
 export class MetadataLib {
-  // private deviceUrl: string
   private serverUrl: string = "http://10.0.4.31:8080";
   private player: playerType = {
     status: "PAUSED_PLAYBACK",
   };
-  private deviceInfo: deviceType = { deviceType: "", friendlyName: "" };
   private biography: string = "default biography";
   private defaultData: metadataType = {
     albumArtist: "",
@@ -27,127 +25,158 @@ export class MetadataLib {
     biography: "",
     streamSource: "",
   };
+  private deviceList: deviceListType = [
+    {
+      location: "",
+      deviceType: "",
+      friendlyName: "",
+      manufacturer: ",",
+      ssidName: ",",
+      uuid: "",
+    },
+  ];
 
   constructor() {}
 
-  init(url: string) {
-    this.serverUrl = url;
-  }
-
-  fetchDeviceInfo() {
-    fetch(`${this.serverUrl}/description/`)
+  async fetchDeviceList() {
+    await fetch(`${this.serverUrl}/devices/`)
       .then((response) => {
         return response.json();
       })
       .then((data) => {
-        this.deviceInfo = this.updateDeviceInfo(data);
+        this.deviceList = data;
       })
       .catch((err) => {
         console.log("error: " + err);
       });
-    return this.deviceInfo;
+    return this.deviceList;
   }
 
   fetchMetadata() {
-    fetch(`${this.serverUrl}/metadata/`)
-      .then((response) => {
-        return response.json();
-      })
-      .then((data) => {
-        this.updateMetadata(data);
-      })
-      .catch((err) => {
-        console.log("error: " + err);
-      });
-    return this.defaultData;
+    if (this.serverUrl) {
+      fetch(`${this.serverUrl}/metadata/`)
+        .then((response) => {
+          return response.json();
+        })
+        .then((data) => {
+          this.updateMetadata(data);
+        })
+        .catch((err) => {
+          console.log("error: " + err);
+        });
+      return this.defaultData;
+    }
   }
 
   fetchPlayerStatus(playerAction: string) {
-    let headers = {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    };
+    if (this.serverUrl) {
+      let headers = {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      };
 
-    fetch(`${this.serverUrl}/actions/`, {
-      method: "POST",
-      headers: headers,
-      body: JSON.stringify({
-        player: playerAction,
-      }),
-    })
-      .then((response) => {
-        return response.json();
+      fetch(`${this.serverUrl}/actions/`, {
+        method: "POST",
+        headers: headers,
+        body: JSON.stringify({
+          player: playerAction,
+        }),
       })
-      .then((data: playerType) => {
-        if (data) {
-          this.player.status = data.status;
-        }
-      })
-      .catch((err) => {
-        console.log("error: " + err);
-      });
-    return this.player;
+        .then((response) => {
+          return response.json();
+        })
+        .then((data: playerType) => {
+          if (data) {
+            this.player.status = data.status;
+          }
+        })
+        .catch((err) => {
+          console.log("error: " + err);
+        });
+      return this.player;
+    }
   }
 
-  postPlayerActions(playerAction: string) {
+  postInit(url: string) {
     let headers = {
       Accept: "application/json",
       "Content-Type": "application/json",
     };
 
-    fetch(`${this.serverUrl}/actions/`, {
+    fetch(`${this.serverUrl}/init/`, {
       method: "POST",
       headers: headers,
       body: JSON.stringify({
-        player: playerAction,
+        location: url,
       }),
     }).catch((err) => {
       console.log("error: " + err);
     });
   }
 
-  async fetchBiography() {
-    const artist = this.urlDecode(this.defaultData.artist);
-    // const album = this.urlDecode(this.defaultData.albumTitle);
+  postPlayerActions(playerAction: string) {
+    if (this.serverUrl) {
+      let headers = {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      };
 
-    const storedData = localStorage.getItem(artist);
-    if (storedData) {
-      this.biography = storedData;
-      return this.biography;
-    }
-
-    let headers = {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    };
-
-    // handle extreme cases when unexpected search results happened
-    if (artist === "Various%20Artists") {
-      return "";
-    }
-
-    await fetch(`${this.serverUrl}/biography/`, {
-      method: "POST",
-      headers: headers,
-      body: JSON.stringify({
-        artist: artist,
-      }),
-    })
-      .then((response) => {
-        return response.json();
-      })
-      .then((data: detailsType) => {
-        if (data.biography !== "no data") {
-          localStorage.setItem(artist, data.biography);
-          this.biography = data.biography;
-        } else {
-          this.biography = "";
-        }
-      })
-      .catch((err) => {
+      fetch(`${this.serverUrl}/actions/`, {
+        method: "POST",
+        headers: headers,
+        body: JSON.stringify({
+          player: playerAction,
+        }),
+      }).catch((err) => {
         console.log("error: " + err);
       });
-    return this.biography;
+    }
+  }
+
+  async fetchBiography() {
+    if (this.serverUrl) {
+      const artist = this.urlDecode(this.defaultData.artist);
+      // const album = this.urlDecode(this.defaultData.albumTitle);
+
+      const storedData = localStorage.getItem(artist);
+      if (storedData) {
+        this.biography = storedData;
+        return this.biography;
+      }
+
+      let headers = {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      };
+
+      // handle extreme cases when unexpected search results happened
+      if (artist === "Various%20Artists") {
+        return "";
+      }
+
+      await fetch(`${this.serverUrl}/biography/`, {
+        method: "POST",
+        headers: headers,
+        body: JSON.stringify({
+          artist: artist,
+        }),
+      })
+        .then((response) => {
+          return response.json();
+        })
+        .then((data: detailsType) => {
+          if (data.biography !== "no data") {
+            localStorage.setItem(artist, data.biography);
+            this.biography = data.biography;
+          } else {
+            this.biography = "";
+          }
+        })
+        .catch((err) => {
+          console.log("error: " + err);
+        });
+      return this.biography;
+    }
   }
 
   audioQuality(data: any): number {
@@ -192,16 +221,12 @@ export class MetadataLib {
     return encodeURIComponent(str);
   }
 
-  updateDeviceInfo(data: deviceType) {
-    if (data.deviceType.indexOf("MediaRenderer") >= 0) {
-      data.deviceType = "Media Renderer";
-    }
-    return data;
-  }
-
   updateMetadata(data: any): metadataType {
     if (data) {
       this.defaultData.songTitle = data["dc:title"] ? data["dc:title"][0] : "";
+      this.defaultData.albumArtist = data["upnp:albumArtist"]
+        ? data["upnp:albumArtist"][0]
+        : "";
       this.defaultData.artist = data["upnp:artist"]
         ? data["upnp:artist"][0]
         : "";
