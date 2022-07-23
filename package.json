@@ -1,0 +1,28 @@
+{
+    "name": "wiim_mini_ui",
+    "version": "0.1.0",
+    "description": "WiiM Mini Web UI",
+    "private": true,
+    "workspaces": [
+        "web_client", "wiim_server"
+    ],
+    "main": "server.js",
+    "scripts": {
+        "ui": "yarn workspace @wiim_mini_ui/web_client",
+        "server": "yarn workspace @wiim_mini_ui/wiim_server",
+        "build": "yarn ui build",
+        "serve": "rm -rf ./wiim_server/public && cp -R ./web_client/dist ./wiim_server/public && yarn server serve",
+        "serve:ui": "yarn build && yarn serve"
+    },
+    "repository": "git+https://github.com/chrishuangcf/wiim-mini-ui.git",
+    "author": "Chris Huang",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/chrishuangcf/wiim-mini-ui/issues"
+    },
+    "homepage": "https://github.com/chrishuangcf/wiim-mini-ui#readme",
+    "packageManager": "yarn@3.1.1",
+    "devDependencies": {
+        "typescript": "^4.7.4"
+    }
+}
