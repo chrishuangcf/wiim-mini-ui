@@ -3,13 +3,12 @@ import type {
   playerType,
   detailsType,
   deviceListType,
-} from "./types";
-export class MetadataLib {
-  private serverUrl: string = "http://10.0.4.31:8080";
-  private player: playerType = {
-    status: "PAUSED_PLAYBACK",
-  };
-  private biography: string = "default biography";
+} from "../types/types";
+import { SERVER_URL, SERVER_PORT } from "@/constants/Constants";
+import { io } from "socket.io-client";
+
+export class Utilities {
+  private serverUrl: string = `http://${SERVER_URL}:${SERVER_PORT}`;
   private defaultData: metadataType = {
     albumArtist: "",
     albumTitle: "",
@@ -25,110 +24,45 @@ export class MetadataLib {
     biography: "",
     streamSource: "",
   };
-  private deviceList: deviceListType = [
-    {
-      location: "",
-      deviceType: "",
-      friendlyName: "",
-      manufacturer: ",",
-      ssidName: ",",
-      uuid: "",
-    },
-  ];
 
-  constructor() {}
+  private socket: any;
+
+  constructor() {
+    this.socket = io(this.serverUrl);
+  }
 
   async fetchDeviceList() {
-    await fetch(`${this.serverUrl}/devices/`)
-      .then((response) => {
-        return response.json();
-      })
-      .then((data) => {
-        this.deviceList = data;
-      })
-      .catch((err) => {
-        console.log("error: " + err);
+    return new Promise((resolve, reject) => {
+      this.socket.emit("devices");
+      this.socket.on("devices", (data: deviceListType) => {
+        this.socket.off("devices");
+        resolve(data);
       });
-    return this.deviceList;
+    });
   }
 
   fetchMetadata() {
-    if (this.serverUrl) {
-      fetch(`${this.serverUrl}/metadata/`)
-        .then((response) => {
-          return response.json();
-        })
-        .then((data) => {
-          this.updateMetadata(data);
-        })
-        .catch((err) => {
-          console.log("error: " + err);
-        });
-      return this.defaultData;
-    }
-  }
-
-  fetchPlayerStatus(playerAction: string) {
-    if (this.serverUrl) {
-      let headers = {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      };
-
-      fetch(`${this.serverUrl}/actions/`, {
-        method: "POST",
-        headers: headers,
-        body: JSON.stringify({
-          player: playerAction,
-        }),
-      })
-        .then((response) => {
-          return response.json();
-        })
-        .then((data: playerType) => {
-          if (data) {
-            this.player.status = data.status;
-          }
-        })
-        .catch((err) => {
-          console.log("error: " + err);
-        });
-      return this.player;
-    }
+    return new Promise((resolve, reject) => {
+      this.socket.emit("metadata");
+      this.socket.on("metadata", (data: any) => {
+        this.socket.off("metadata");
+        resolve(this.updateMetadata(data));
+      });
+    });
   }
 
   postInit(url: string) {
-    let headers = {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    };
-
-    fetch(`${this.serverUrl}/init/`, {
-      method: "POST",
-      headers: headers,
-      body: JSON.stringify({
-        location: url,
-      }),
-    }).catch((err) => {
-      console.log("error: " + err);
-    });
+    this.socket.emit("init", url);
   }
 
   postPlayerActions(playerAction: string) {
     if (this.serverUrl) {
-      let headers = {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      };
-
-      fetch(`${this.serverUrl}/actions/`, {
-        method: "POST",
-        headers: headers,
-        body: JSON.stringify({
-          player: playerAction,
-        }),
-      }).catch((err) => {
-        console.log("error: " + err);
+      return new Promise((resolve, reject) => {
+        this.socket.emit("actions", playerAction);
+        this.socket.on("actions", (data: any) => {
+          this.socket.off("actions");
+          resolve(data);
+        });
       });
     }
   }
@@ -140,54 +74,39 @@ export class MetadataLib {
 
       const storedData = localStorage.getItem(artist);
       if (storedData) {
-        this.biography = storedData;
-        return this.biography;
+        return storedData;
       }
-
-      let headers = {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      };
 
       // handle extreme cases when unexpected search results happened
       if (artist === "Various%20Artists") {
         return "";
       }
 
-      await fetch(`${this.serverUrl}/biography/`, {
-        method: "POST",
-        headers: headers,
-        body: JSON.stringify({
-          artist: artist,
-        }),
-      })
-        .then((response) => {
-          return response.json();
-        })
-        .then((data: detailsType) => {
-          if (data.biography !== "no data") {
-            localStorage.setItem(artist, data.biography);
-            this.biography = data.biography;
+      return new Promise((resolve, reject) => {
+        this.socket.emit("biography", artist);
+        this.socket.on("biography", (data: any) => {
+          this.socket.off("biography");
+
+          if (data !== "no data") {
+            localStorage.setItem(artist, data);
+            resolve(data);
           } else {
-            this.biography = "";
+            resolve("");
           }
-        })
-        .catch((err) => {
-          console.log("error: " + err);
         });
-      return this.biography;
+      });
     }
   }
 
-  audioQuality(data: any): number {
+  audioQuality(data: any, streamSource: string, songQuality: string): number {
     let returnAudioQuality = data;
     if (!isNaN(returnAudioQuality)) {
       if (data > 24) {
         returnAudioQuality = 24;
       }
     }
-    if (this.defaultData.streamSource === "amazon") {
-      if (this.defaultData.songQuality === "HD") {
+    if (streamSource === "amazon") {
+      if (songQuality === "HD") {
         returnAudioQuality = 16;
       }
     }
@@ -222,6 +141,10 @@ export class MetadataLib {
   }
 
   updateMetadata(data: any): metadataType {
+    const songQuality = data["song:actualQuality"]
+      ? data["song:actualQuality"][0]
+      : "";
+    const streamSource = this.streamSource(data["upnp:albumArtURI"][0]);
     if (data) {
       this.defaultData.songTitle = data["dc:title"] ? data["dc:title"][0] : "";
       this.defaultData.albumArtist = data["upnp:albumArtist"]
@@ -240,20 +163,16 @@ export class MetadataLib {
         ? data["song:format_s"][0]
         : "";
       this.defaultData.songDepth = data["song:format_s"]
-        ? this.audioQuality(data["song:format_s"][0])
+        ? this.audioQuality(data["song:format_s"][0], streamSource, songQuality)
         : 0;
-      this.defaultData.songQuality = data["song:actualQuality"]
-        ? data["song:actualQuality"][0]
-        : "";
+      this.defaultData.songQuality = songQuality;
       this.defaultData.songRate = data["song:rate_hz"]
         ? this.bitrate(data["song:rate_hz"][0])
         : 0;
       this.defaultData.songBitrate = data["song:bitrate"]
         ? data["song:bitrate"][0]
         : 0;
-      this.defaultData.streamSource = this.streamSource(
-        this.defaultData.albumUrl
-      );
+      this.defaultData.streamSource = streamSource;
     }
     return this.defaultData;
   }

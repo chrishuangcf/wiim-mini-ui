@@ -49,8 +49,8 @@
 </template>
 
 <script lang="ts">
-import { MetadataLib } from "../actions/lib";
-const lib = new MetadataLib();
+import { Utilities } from "../actions/lib";
+const lib = new Utilities();
 
 export default {
   name: "Biography",

@@ -74,8 +74,9 @@ import Devices from "@/components/Devices.vue";
 </template>
 
 <script lang="ts">
-import { MetadataLib } from "../actions/lib";
-const lib = new MetadataLib();
+import { Utilities } from "../actions/lib";
+
+const lib = new Utilities();
 
 export default {
   name: "HomeView",
@@ -107,7 +108,7 @@ export default {
       timer: 0,
     };
   },
-  components: { ToolBar, AlbumArt, SongSpecs, Biography },
+  components: { ToolBar, AlbumArt, SongSpecs, Biography, Devices },
   created() {
     this.fetchDeviceList();
     this.timer = setInterval(this.fetchRefreshData, 1000);
@@ -153,7 +154,7 @@ export default {
       this.artistBio = await lib.fetchBiography();
     },
     fetchPlayerStatus: async function () {
-      this.playerStatus = await lib.fetchPlayerStatus("status").status;
+      this.playerStatus = await lib.postPlayerActions("status");
     },
     displayShortName: function (artist: string) {
       if (artist.length > 50) {
