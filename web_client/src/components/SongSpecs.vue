@@ -30,8 +30,9 @@ import mediaServerIcon from "@/assets/default-media-server.png";
     </v-col>
     <v-col cols="8">
       <p class="text--primary songSpecs">
-        {{ songDepth }} bits / {{ songRate }} kHz
-        <span v-if="songBitrate > 0">{{ songBitrate }} kbps</span>
+        <span v-if="songDepth > 0">{{ songDepth }} bits / </span>
+        {{ songRate }} kHz
+        <span v-if="songBitrate > 0">{{ songBitrate }} Mbps</span>
       </p>
     </v-col>
   </v-row>
@@ -64,12 +65,21 @@ export default {
     songDepth: {
       immediate: true,
       handler(newValue, oldValue) {
+        this.updateSongSpecs();
         this.updateAudioQualityImg();
       },
     },
-    streamSource: {
+    songBitrate: {
       immediate: true,
       handler(newValue, oldValue) {
+        this.updateSongSpecs();
+        this.updateAudioQualityImg();
+      },
+    },
+    songQuality: {
+      immediate: true,
+      handler(newValue, oldValue) {
+        this.updateSongSpecs();
         this.updateAudioQualityImg();
       },
     },
@@ -94,7 +104,6 @@ export default {
     },
     updateAudioQualityImg() {
       if (this.streamSource) {
-        console.log("STREAM SOURCE", this.streamSource);
         switch (this.streamSource) {
           case "qobuz":
             if (this.songDepth === 0) {

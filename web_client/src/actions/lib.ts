@@ -114,9 +114,18 @@ export class Utilities {
     return returnAudioQuality;
   }
 
-  bitrate(data: any): number {
+  frequence(data: any): number {
     if (!isNaN(data) && data !== undefined) {
       const temp = data > 1000 ? (data / 1000).toFixed(2) : data;
+      return temp;
+    } else {
+      return 0;
+    }
+  }
+
+  bitrate(data: any): number {
+    if (!isNaN(data) && data !== undefined) {
+      const temp = data > 1000 ? (data / 100000).toFixed(2) : data;
       return temp;
     } else {
       return 0;
@@ -168,19 +177,24 @@ export class Utilities {
         : 0;
       this.defaultData.songQuality = songQuality;
       this.defaultData.songRate = data["song:rate_hz"]
-        ? this.bitrate(data["song:rate_hz"][0])
+        ? this.frequence(data["song:rate_hz"][0])
         : 0;
-      this.defaultData.songBitrate = data["song:bitrate"]
-        ? data["song:bitrate"][0]
-        : 0;
+      this.defaultData.songBitrate = this.bitrate(
+        data["song:bitrate"] ? data["song:bitrate"][0] : 0
+      );
       this.defaultData.streamSource = streamSource;
 
       // local dlna media server
       const currentSong = data["res"][0]["$"];
-      if (currentSong && currentSong?.bitsPerSample) {
+
+      if (currentSong?.bitsPerSample) {
         this.defaultData.songDepth = currentSong.bitsPerSample;
+      }
+      if (currentSong?.bitrate) {
         this.defaultData.songBitrate = this.bitrate(currentSong.bitrate);
-        this.defaultData.songRate = this.bitrate(currentSong.sampleFrequency);
+      }
+      if (currentSong?.sampleFrequency) {
+        this.defaultData.songRate = this.frequence(currentSong.sampleFrequency);
       }
     }
     return this.defaultData;
