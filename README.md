@@ -45,22 +45,51 @@ yarn serve
 
 These commands will first build the web app into a bundled, minified package. Then the script will copy the productionalized web app into the right place and start the back-end services and host it under the node.js as a static page. In this mode, you really only need to hit **http://localhost:8080** to run the web app.
 
+---
+
+**IMPORTRANT** The web app had a hard coded "server" location inside of /web_client/constants/Constants.ts file. Please change **SERVER_URL** and **SERVER_PORT** accordingly.
+
+---
+
 ### Deployment Mode
 
-If you wish to run this web app anywhere else, such as a mini Single Board Computer like a Raspberry Pi or even deploy as a docker container. All you have to do is to run the `yarn ui build` command first. After the building process has finished, you just have to copy **/web_client/dist** directory into a directory where you wish to run the service. For example! If your Node.js is running at **/helloWorld** folder, then you need to copy **/web_client/dist"" into **/HelloWorld/public**. After that, just copy **/wiim_server** into **/HelloWorld** directory and run with **node server.js\*\*.
+If you wish to run this web app anywhere else, such as a mini Single Board Computer like a Raspberry Pi or even deploy as a docker container. All you have to do is to run the `yarn ui build` command first. After the building process has finished, you just have to copy **/web_client/dist** directory into a directory where you wish to run the service. For example! If your Node.js is running at **/helloWorld** folder, then you need to copy **/web_client/dist** into **/HelloWorld/public**. After that, just copy **/wiim_server** into **/HelloWorld** directory and run with **node server.js** (after you properly installed by running `npm install`).
 
 1. make a build by running ``yarn ui build`.
 2. copy **/web_client/dist** directory into **<destination>/public** directory.
 3. copy **/wiim_server/server.js** into **<destination>/** directory.
 4. run `node server.js` to start both back-end server and front-end web app.
 
-### How to use
+### How to set up on a Raspberry Pi
+
+1. Grant access through SSH terminal into your Raspberry Pi
+2. sudo apt-get update
+3. sudo apt-get upgrade
+4. sudo apt remove node (If you already had an older version installed)
+5. sudo apt remove nodejs (If you already had an older version installed)
+6. -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash - (This command will download latest node.js)
+7. sudo apt-get install -y nodejs (Install Node.js)
+8. node -v (check if node.js is properly installed)
+
+9. At your current computer, kick in a build by `yarn ui build`
+10. Copy **/web_client/dist** into Raspberry Pi to where you want your code to be hosted **<destination>/public**
+11. Copy **server.js** and **package.json** files in **/wiim_server/** into your **<destination>** folder on the Raspberry Pi.
+12. Run ``npm install` to install dependencies.
+13. Run `hostname -I` to find out your IP address on the Raspberry Pi.
+14. Run `node server.js` to run the Server + Web App.
+15. Run a browser to **<Raspberry Pi IP Address> : <Running port number>** You should be able to see the web app running.
+
+## How to use
 
 When you first landed on the web app. You should see the broken UI (It's on my to-do list to fix that). You will first need to click on the **SPEAKER** icon to select a Media Renderer on your own network. You should be able to see the screen as follows.
 <img title="Select a Media Renderer" alt="Alt text" src="./assets/select_player.jpg">
 
 When you click on the artist name (a pink button), that should bring up a card below the main player.
 <img title="Select a Media Renderer" alt="Alt text" src="./assets/display_biography.jpg">
+
+It's obvious that this web app can run under any device with a browser. Here are screenshots on my TV and my Amazon Echo Show 5
+<img title="Select a Media Renderer" alt="Alt text" src="./assets/on_tv.jpg">
+<img title="Select a Media Renderer" alt="Alt text" src="./assets/on_echo.jpg">
 
 ## Change Logs
 
