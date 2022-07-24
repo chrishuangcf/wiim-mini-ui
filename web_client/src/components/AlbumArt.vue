@@ -24,10 +24,7 @@
 export default {
   name: "AlbumArt",
   props: ["imgUrl"],
-  data: () => ({
-    absolute: true,
-    overlay: true,
-  }),
+  data: () => ({}),
   mounted: function () {},
   watch: {},
   methods: {},

@@ -4,6 +4,7 @@ import AlbumArt from "@/components/AlbumArt.vue";
 import SongSpecs from "@/components/SongSpecs.vue";
 import Biography from "@/components/Biography.vue";
 import Devices from "@/components/Devices.vue";
+import CoverArt from "@/assets/cover.jpg";
 </script>
 
 <template>
@@ -44,6 +45,7 @@ import Devices from "@/components/Devices.vue";
                     color="#EA80FC"
                     v-on:click="toggleBio"
                     style="text-overflow: ellipsis"
+                    v-if="this.metadata.artist"
                   >
                     {{ displayArtistShortName }}
                   </v-btn>
@@ -83,17 +85,17 @@ export default {
   data: () => {
     return {
       metadata: {
-        albumArtist: "",
-        albumTitle: "",
-        albumUrl: "",
-        songTitle: "",
+        albumArtist: "Album Artist",
+        albumTitle: "Album Title",
+        albumUrl: CoverArt,
+        songTitle: "Song Title",
         songFormat: "",
         songDepth: 0,
         songQuality: "",
         songRate: 0,
         songBitrate: 0,
         artist: "",
-        album: "",
+        album: "Album Title",
         streamSource: "",
       },
       playerStatus: "PAUSED_PLAYBACK",
