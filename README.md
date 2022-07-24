@@ -10,7 +10,7 @@ Song metata will support **Local DLNA server**, **Spotify**, **Qobuz** and **Ama
 
 ## Install
 
-Depends on if you are a developer or an end-user. There are several ways to hit the ground running.
+Depends on if you are a developer or an end user. There are several ways to hit the ground running.
 
 The system consists of two parts. A backend server (node.js) and an interactive web user interface (vuetify 3).
 
