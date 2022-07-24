@@ -94,6 +94,7 @@ export default {
     },
     updateAudioQualityImg() {
       if (this.streamSource) {
+        console.log("STREAM SOURCE", this.streamSource);
         switch (this.streamSource) {
           case "qobuz":
             if (this.songDepth === 0) {
