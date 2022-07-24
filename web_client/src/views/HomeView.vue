@@ -167,6 +167,7 @@ export default {
       this.toggles.bio = !this.toggles.bio;
     },
     toggleDeviceList: function (showDevices: boolean) {
+      this.fetchDeviceList();
       this.toggles.devices = showDevices;
     },
     postInit: (location: string) => {

@@ -23,6 +23,7 @@ export class Utilities {
     album: "",
     biography: "",
     streamSource: "",
+    songDuration: "",
   };
 
   private socket: any;
@@ -123,7 +124,7 @@ export class Utilities {
   }
 
   streamSource(data: string): string {
-    let streamSource = "";
+    let streamSource = "default";
     if (data.indexOf("amazon") >= 0) {
       streamSource = "amazon";
     }
@@ -173,6 +174,14 @@ export class Utilities {
         ? data["song:bitrate"][0]
         : 0;
       this.defaultData.streamSource = streamSource;
+
+      // local dlna media server
+      const currentSong = data["res"][0]["$"];
+      if (currentSong && currentSong?.bitsPerSample) {
+        this.defaultData.songDepth = currentSong.bitsPerSample;
+        this.defaultData.songBitrate = this.bitrate(currentSong.bitrate);
+        this.defaultData.songRate = this.bitrate(currentSong.sampleFrequency);
+      }
     }
     return this.defaultData;
   }

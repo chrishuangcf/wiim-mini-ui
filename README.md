@@ -6,6 +6,8 @@ This project was inspired by  Ralph Cramden on AudioScienceReview forum. The g
 
 My initial intention was to build a lovely web app for my WiiM mini devices because I missed so much from volumio, logitech media server or roon. Hence, the project name was "WiiM mini UI". Since the web app does interact with all Media Renderers on your system. (As long as it supports proper UPnP. (Sorry for OpenHome users. I'll put that into my to-do list))
 
+Song metata will support **Local DLNA server**, **Spotify**, **Qobuz** and **Amazon Music**. I am sorry I am currently not a subscriber of **TIDAL**.
+
 ## Install
 
 Depends on if you are a developer or an end-user. There are several ways to hit the ground running.
@@ -60,8 +62,19 @@ When you first landed on the web app. You should see the broken UI (It's on my t
 When you click on the artist name (a pink button), that should bring up a card below the main player.
 <img title="Select a Media Renderer" alt="Alt text" src="./assets/display_biography.jpg">
 
-### TO-DO list
+## Change Logs
+
+- 7/24/22
+  - moved backend from RESTful requests into Websocket communication to give real time feedback
+  - updated metadata accuracy. Now will display Spotify, Qobuz, Amzon Music and local UPnP media servers.
+    - Quboz will display CD or Hi-Res
+    - Amazon Music will display UHD or HD
+    - Spotify will display MP3 (Don't ask me when are we seeing Hi-Res from Sptify!)
+    - Local UPnP depends on the bitrate. It will display Hi-Res or CD
+
+## TO-DO list
 
 1. Default screen should be more graceful when a player isn't selected. Also bug fixes when metadata is incomplete from the server side so it will exit from unexpected behaviors.
 2. During Developer Mode, Vue + Vuetify + Vite + TypeScript simply doesn't like to pull in icon assets properly. (Probably because both Vue 3 and Vuetify 3 were still in alpha?
-3. Possibility to support OpenHome protocol so the web app can also control Volumio player, Chromecast over BubbleUPnP, etc...)
+3. Possibility to support OpenHome protocol for controlling the renderer (currently it will display metadata but fast track to next track won't work as OpenHome system design was to have playlist saved on individual "client". Therefore, it's not possible to advance to next track becauser there was no "next track" available). This will affect all BubbleUPnP renderers such as Chromcast, Volumio.
+4. Local UPnP Media Server would be able to stream more than just CD/Hi-Res options. The options would be LOSSY, LOSSLESS..etc... The metadata is sometimes very limited.

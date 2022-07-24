@@ -12,6 +12,7 @@ export type metadataType = {
   album: string;
   biography: string;
   streamSource: string;
+  songDuration: string;
 };
 
 export type playerType = {

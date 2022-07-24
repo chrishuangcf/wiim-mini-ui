@@ -7,6 +7,7 @@ import hdLogo from "@/assets/hd-logo.jpg";
 import uhdLogo from "@/assets/uhd-logo.jpg";
 import cdLogo from "@/assets/cd.jpg";
 import mp3Logo from "@/assets/mp3.png";
+import mediaServerIcon from "@/assets/default-media-server.png";
 </script>
 
 <template>
@@ -30,6 +31,7 @@ import mp3Logo from "@/assets/mp3.png";
     <v-col cols="8">
       <p class="text--primary songSpecs">
         {{ songDepth }} bits / {{ songRate }} kHz
+        <span v-if="songBitrate > 0">{{ songBitrate }} kbps</span>
       </p>
     </v-col>
   </v-row>
@@ -65,6 +67,12 @@ export default {
         this.updateAudioQualityImg();
       },
     },
+    streamSource: {
+      immediate: true,
+      handler(newValue, oldValue) {
+        this.updateAudioQualityImg();
+      },
+    },
   },
   methods: {
     updateSongSpecs() {
@@ -79,11 +87,14 @@ export default {
           case "spotify":
             this.logoImgUrl = spotifyLogo;
             break;
+          default:
+            this.logoImgUrl = mediaServerIcon;
         }
       }
     },
     updateAudioQualityImg() {
       if (this.streamSource) {
+        console.log("STREAM SOURCE", this.streamSource);
         switch (this.streamSource) {
           case "qobuz":
             if (this.songDepth === 0) {
@@ -103,6 +114,8 @@ export default {
           case "spotify":
             this.qualityImgUrl = mp3Logo;
             break;
+          default:
+            this.qualityImgUrl = this.songRate > 44.1 ? hiresLogo : cdLogo;
         }
       }
     },
