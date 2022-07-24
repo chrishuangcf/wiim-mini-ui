@@ -3,7 +3,7 @@
     "version": "0.0.1",
     "private": true,
     "scripts": {
-        "start": "node server.js"
+        "serve": "node server.js"
     },
     "dependencies": {
         "socket.io": "^4.5.1"
