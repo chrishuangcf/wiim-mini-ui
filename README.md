@@ -30,7 +30,7 @@ As a developer, you might want to run both back-end and front-end service separa
 
 ### Developer Mode
 
-By running `yarn ui dev` will host a hot-swap version of web server to run the front-end code on **localhost:3000**. Meanwhile, running `yarn server start` will kick in back-end server on **localhost:8080**.
+By running `yarn ui dev` will host a hot-swap version of web server to run the front-end code on **localhost:3000**. Meanwhile, running `yarn server serve` will kick in back-end server on **localhost:8080**.
 
 ### Production Mode
 
