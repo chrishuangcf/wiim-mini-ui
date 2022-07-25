@@ -89,7 +89,10 @@ Reported by users, the building tools might not properly compile on Windows 11. 
 
 ## How to use
 
-When you first landed on the web app. You should see the broken UI (It's on my to-do list to fix that). You will first need to click on the **SPEAKER** icon to select a Media Renderer on your own network. You should be able to see the screen as follows.
+When you first landed on the web app. You should see an input box for you to enter your server location. (This is your computer IP address where you are running the server from).
+<img title="Select a Media Renderer" alt="Alt text" src="./assets/setup1.jpg">
+
+You will then need to click on the **SPEAKER** icon to select a Media Renderer on your own network. You should be able to see the screen as follows.
 <img title="Select a Media Renderer" alt="Alt text" src="./assets/select_player.jpg">
 
 When you click on the artist name (a pink button), that should bring up a card below the main player.
@@ -100,6 +103,10 @@ It's obvious that this web app can run under any device with a browser. Here are
 <img title="Select a Media Renderer" alt="Alt text" src="./assets/on_echo.jpg">
 
 ## Change Logs
+
+- 7/25/22
+
+  - removed hard coded server url. add a new input text field for user to enter their own server ip address to initialize the service with wiim_server.
 
 - 7/24/22
   - moved backend from RESTful requests into Websocket communication to give real time feedback
