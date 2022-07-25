@@ -1,13 +1,9 @@
-import type {
-  metadataType,
-  playerType,
-  detailsType,
-  deviceListType,
-} from "../types/types";
+import type { metadataType, deviceListType } from "../types/types";
+import { SERVER_PORT } from "../constants/Constants";
 import { io } from "socket.io-client";
 
 export class Utilities {
-  private serverUrl: string = undefined; // `http://${SERVER_URL}:${SERVER_PORT}`;
+  private serverUrl: string = undefined;
   private defaultData: metadataType = {
     albumArtist: "",
     albumTitle: "",
@@ -30,7 +26,7 @@ export class Utilities {
   constructor() {}
 
   init(serverUrl: string) {
-    this.serverUrl = serverUrl;
+    this.serverUrl = `http://${serverUrl}:${SERVER_PORT}`;
     this.socket = io(this.serverUrl);
   }
 

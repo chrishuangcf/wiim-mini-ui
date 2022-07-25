@@ -4,7 +4,8 @@
     "description": "WiiM Mini Web UI",
     "private": true,
     "workspaces": [
-        "web_client", "wiim_server"
+        "web_client",
+        "wiim_server"
     ],
     "main": "server.js",
     "scripts": {

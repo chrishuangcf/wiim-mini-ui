@@ -38,21 +38,19 @@ import CoverArt from "@/assets/cover.jpg";
                       :songQuality="metadata.songQuality"
                     /></p
                 ></v-card-subtitle>
-
                 <v-card-text>
                   <v-btn
                     rounded="lg"
                     color="#EA80FC"
                     v-on:click="toggleBio"
                     style="text-overflow: ellipsis"
-                    v-if="this.metadata.artist"
+                    v-if="metadata.artist"
                   >
                     {{ displayArtistShortName }}
                   </v-btn>
                 </v-card-text>
                 <div style="position: absolute; bottom: 0px; width: 100%">
                   <Devices
-                    :v-model="serverUrl"
                     :deviceList="deviceList"
                     @location="postInit"
                     v-if="toggles.devices"
@@ -86,7 +84,6 @@ export default {
   name: "HomeView",
   data: () => {
     return {
-      serverUrl: undefined,
       metadata: {
         albumArtist: "Album Artist",
         albumTitle: "Album Title",

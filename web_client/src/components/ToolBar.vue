@@ -1,10 +1,10 @@
 <template>
   <div color="#424242" dark prominent class="justify-space-around">
-    <v-form v-if="serverUrl === undefined && !toggleInitInput">
+    <v-form v-if="!toggleInitInput">
       <v-container>
         <v-row>
           <v-col cols="12">
-            wiim_server location : ex: 192.168.0.1:8080
+            wiim_server location : ex: 192.168.0.1
             <v-text-field
               v-model="updatedServerUrl"
               label="Regular"
@@ -45,7 +45,7 @@
 <script lang="ts">
 export default {
   name: "ToolBar",
-  props: ["serverUrl, playerStatus"],
+  props: ["playerStatus"],
   data: () => ({
     toggle: false,
     toggleInitInput: false,
