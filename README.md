@@ -77,7 +77,15 @@ If you wish to run this web app anywhere else, such as a mini Single Board Compu
 12. Run ``npm install` to install dependencies.
 13. Run `hostname -I` to find out your IP address on the Raspberry Pi.
 14. Run `node server.js` to run the Server + Web App.
-15. Run a browser to **<Raspberry Pi IP Address> : <Running port number>** You should be able to see the web app running.
+15. Run a browser to **[Raspberry Pi IP Address] : [Running port number]** You should be able to see the web app running.
+
+### If you have building issue, want to skip the whole building process
+
+Reported by users, the building tools might not properly compile on Windows 11. Due to the tool set for building the project mainly used tools to run under Linux/OSX. There i s also a copy of production built web app already placed in the **/wiim_server/public** folder. You should be able to run just by using following commands :
+
+1. cd **wiim_server**
+2. **npm install** (run this to pull in all the dependencies for the server)
+3. **node server.js** (to run it)
 
 ## How to use
 
@@ -103,7 +111,6 @@ It's obvious that this web app can run under any device with a browser. Here are
 
 ## TO-DO list
 
-1. Default screen should be more graceful when a player isn't selected. Also bug fixes when metadata is incomplete from the server side so it will exit from unexpected behaviors.
-2. During Developer Mode, Vue + Vuetify + Vite + TypeScript simply doesn't like to pull in icon assets properly. (Probably because both Vue 3 and Vuetify 3 were still in alpha?
-3. Possibility to support OpenHome protocol for controlling the renderer (currently it will display metadata but fast track to next track won't work as OpenHome system design was to have playlist saved on individual "client". Therefore, it's not possible to advance to next track becauser there was no "next track" available). This will affect all BubbleUPnP renderers such as Chromcast, Volumio.
-4. Local UPnP Media Server would be able to stream more than just CD/Hi-Res options. The options would be LOSSY, LOSSLESS..etc... The metadata is sometimes very limited.
+1. During Developer Mode, Vue + Vuetify + Vite + TypeScript simply doesn't like to pull in icon assets properly. (Probably because both Vue 3 and Vuetify 3 were still in alpha?
+2. Possibility to support OpenHome protocol for controlling the renderer (currently it will display metadata but fast track to next track won't work as OpenHome system design was to have playlist saved on individual "client". Therefore, it's not possible to advance to next track becauser there was no "next track" available). This will affect all BubbleUPnP renderers such as Chromcast, Volumio.
+3. Local UPnP Media Server would be able to stream more than just CD/Hi-Res options. The options would be LOSSY, LOSSLESS..etc... The metadata is sometimes very limited.
