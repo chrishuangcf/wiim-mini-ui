@@ -1,5 +1,21 @@
 <template>
   <div color="#424242" dark prominent class="justify-space-around">
+    <v-form v-if="serverUrl === undefined && !toggleInitInput">
+      <v-container>
+        <v-row>
+          <v-col cols="12">
+            wiim_server location : ex: 192.168.0.1:8080
+            <v-text-field
+              v-model="updatedServerUrl"
+              label="Regular"
+            ></v-text-field>
+            <v-btn color="success" class="mr-4" @click="handleUpdateServerUrl"
+              >Set</v-btn
+            >
+          </v-col>
+        </v-row>
+      </v-container>
+    </v-form>
     <v-btn-toggle rounded="lg" class="py-2" color="#607D8B" dark size="xs">
       <v-btn icon v-on:click="handleShowDevices()"
         ><v-icon>mdi-speaker-wireless</v-icon></v-btn
@@ -29,9 +45,11 @@
 <script lang="ts">
 export default {
   name: "ToolBar",
-  props: ["playerStatus"],
+  props: ["serverUrl, playerStatus"],
   data: () => ({
     toggle: false,
+    toggleInitInput: false,
+    updatedServerUrl: "",
   }),
   mounted: function () {},
   watch: {},
@@ -42,6 +60,10 @@ export default {
     handleShowDevices() {
       this.toggle = !this.toggle;
       this.$emit("showDevices", this.toggle);
+    },
+    handleUpdateServerUrl() {
+      this.toggleInitInput = !this.toggleInitInput;
+      this.$emit("updateServerUrl", this.updatedServerUrl);
     },
   },
 };

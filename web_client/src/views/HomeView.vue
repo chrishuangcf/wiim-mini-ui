@@ -52,6 +52,7 @@ import CoverArt from "@/assets/cover.jpg";
                 </v-card-text>
                 <div style="position: absolute; bottom: 0px; width: 100%">
                   <Devices
+                    :v-model="serverUrl"
                     :deviceList="deviceList"
                     @location="postInit"
                     v-if="toggles.devices"
@@ -60,6 +61,7 @@ import CoverArt from "@/assets/cover.jpg";
                     :playerStatus="playerStatus"
                     @player="postActions"
                     @showDevices="toggleDeviceList"
+                    @updateServerUrl="postServeUrl"
                     color="#424242"
                   />
                 </div>
@@ -84,6 +86,7 @@ export default {
   name: "HomeView",
   data: () => {
     return {
+      serverUrl: undefined,
       metadata: {
         albumArtist: "Album Artist",
         albumTitle: "Album Title",
@@ -177,6 +180,9 @@ export default {
     },
     postActions: (action: string) => {
       lib.postPlayerActions(action);
+    },
+    postServeUrl: (serverUrl: string) => {
+      lib.init(serverUrl);
     },
     cancelAutoUpdate() {
       clearInterval(this.timer);

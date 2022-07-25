@@ -4,11 +4,10 @@ import type {
   detailsType,
   deviceListType,
 } from "../types/types";
-import { SERVER_URL, SERVER_PORT } from "@/constants/Constants";
 import { io } from "socket.io-client";
 
 export class Utilities {
-  private serverUrl: string = `http://${SERVER_URL}:${SERVER_PORT}`;
+  private serverUrl: string = undefined; // `http://${SERVER_URL}:${SERVER_PORT}`;
   private defaultData: metadataType = {
     albumArtist: "",
     albumTitle: "",
@@ -28,27 +27,34 @@ export class Utilities {
 
   private socket: any;
 
-  constructor() {
+  constructor() {}
+
+  init(serverUrl: string) {
+    this.serverUrl = serverUrl;
     this.socket = io(this.serverUrl);
   }
 
   async fetchDeviceList() {
     return new Promise((resolve, reject) => {
-      this.socket.emit("devices");
-      this.socket.on("devices", (data: deviceListType) => {
-        this.socket.off("devices");
-        resolve(data);
-      });
+      if (this.socket) {
+        this.socket.emit("devices");
+        this.socket.on("devices", (data: deviceListType) => {
+          this.socket.off("devices");
+          resolve(data);
+        });
+      }
     });
   }
 
   fetchMetadata() {
     return new Promise((resolve, reject) => {
-      this.socket.emit("metadata");
-      this.socket.on("metadata", (data: any) => {
-        this.socket.off("metadata");
-        resolve(this.updateMetadata(data));
-      });
+      if (this.socket) {
+        this.socket.emit("metadata");
+        this.socket.on("metadata", (data: any) => {
+          this.socket.off("metadata");
+          resolve(this.updateMetadata(data));
+        });
+      }
     });
   }
 
@@ -57,61 +63,67 @@ export class Utilities {
   }
 
   postPlayerActions(playerAction: string) {
-    if (this.serverUrl) {
-      return new Promise((resolve, reject) => {
-        this.socket.emit("actions", playerAction);
-        this.socket.on("actions", (data: any) => {
-          this.socket.off("actions");
-          resolve(data);
+    if (this.socket) {
+      if (this.serverUrl) {
+        return new Promise((resolve, reject) => {
+          this.socket.emit("actions", playerAction);
+          this.socket.on("actions", (data: any) => {
+            this.socket.off("actions");
+            resolve(data);
+          });
         });
-      });
+      }
     }
   }
 
   async fetchBiography() {
-    if (this.serverUrl) {
-      const artist = this.urlDecode(this.defaultData.artist);
-      // const album = this.urlDecode(this.defaultData.albumTitle);
+    if (this.socket) {
+      if (this.serverUrl) {
+        const artist = this.urlDecode(this.defaultData.artist);
+        // const album = this.urlDecode(this.defaultData.albumTitle);
 
-      const storedData = localStorage.getItem(artist);
-      if (storedData) {
-        return storedData;
-      }
+        const storedData = localStorage.getItem(artist);
+        if (storedData) {
+          return storedData;
+        }
 
-      // handle extreme cases when unexpected search results happened
-      if (artist === "Various%20Artists") {
-        return "";
-      }
+        // handle extreme cases when unexpected search results happened
+        if (artist === "Various%20Artists") {
+          return "";
+        }
 
-      return new Promise((resolve, reject) => {
-        this.socket.emit("biography", artist);
-        this.socket.on("biography", (data: any) => {
-          this.socket.off("biography");
+        return new Promise((resolve, reject) => {
+          this.socket.emit("biography", artist);
+          this.socket.on("biography", (data: any) => {
+            this.socket.off("biography");
 
-          if (data !== "no data") {
-            localStorage.setItem(artist, data);
-            resolve(data);
-          } else {
-            resolve("");
-          }
+            if (data !== "no data") {
+              localStorage.setItem(artist, data);
+              resolve(data);
+            } else {
+              resolve("");
+            }
+          });
         });
-      });
+      }
     }
   }
 
   audioQuality(data: any, streamSource: string, songQuality: string): number {
-    let returnAudioQuality = data;
-    if (!isNaN(returnAudioQuality)) {
-      if (data > 24) {
-        returnAudioQuality = 24;
+    if (this.socket) {
+      let returnAudioQuality = data;
+      if (!isNaN(returnAudioQuality)) {
+        if (data > 24) {
+          returnAudioQuality = 24;
+        }
       }
-    }
-    if (streamSource === "amazon") {
-      if (songQuality === "HD") {
-        returnAudioQuality = 16;
+      if (streamSource === "amazon") {
+        if (songQuality === "HD") {
+          returnAudioQuality = 16;
+        }
       }
+      return returnAudioQuality;
     }
-    return returnAudioQuality;
   }
 
   frequence(data: any): number {
