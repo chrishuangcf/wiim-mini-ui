@@ -74,12 +74,12 @@ If you wish to run this web app anywhere else, such as a mini Single Board Compu
 9. At your current computer, kick in a build by `yarn ui build`
 10. Copy **/web_client/dist** into Raspberry Pi to where you want your code to be hosted **<destination>/public**
 11. Copy **server.js** and **package.json** files in **/wiim_server/** into your **<destination>** folder on the Raspberry Pi.
-12. Run ``npm install` to install dependencies.
+12. Run `npm install` to install dependencies.
 13. Run `hostname -I` to find out your IP address on the Raspberry Pi.
 14. Run `node server.js` to run the Server + Web App.
 15. Run a browser to **[Raspberry Pi IP Address] : [Running port number]** You should be able to see the web app running.
 
-### If you have building issue, want to skip the whole building process
+### If you are haveing build issues, want to skip the whole building process
 
 Reported by users, the building tools might not properly compile on Windows 11. Due to the tool set for building the project mainly used tools to run under Linux/OSX. There i s also a copy of production built web app already placed in the **/wiim_server/public** folder. You should be able to run just by using following commands :
 
