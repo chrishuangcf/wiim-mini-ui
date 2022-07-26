@@ -56,9 +56,54 @@
             "eslint:recommended"
         ],
         "parserOptions": {
-            "parser": "@babel/eslint-parser"
+            "ecmaVersion": 2021,
+            "parser": "@babel/eslint-parser",
+            "requireConfigFile": false,
+            "sourceType": "module"
         },
-        "rules": {}
+        "rules": {
+            "comma-dangle": [
+                "error",
+                "always-multiline"
+            ],
+            "max-len": "off",
+            "indent": "off",
+            "template-curly-spacing": "off",
+            "vue/component-name-in-template-casing": [
+                "error",
+                "kebab-case"
+            ],
+            "vue/script-indent": [
+                "error",
+                2,
+                {
+                    "baseIndent": 1,
+                    "switchCase": 1,
+                    "ignores": []
+                }
+            ],
+            "vue/max-attributes-per-line": [
+                "error",
+                {
+                    "singleline": 1,
+                    "multiline": {
+                        "max": 1
+                    }
+                }
+            ],
+            "vue/html-closing-bracket-newline": [
+                "error",
+                {
+                    "singleline": "never",
+                    "multiline": "always"
+                }
+            ],
+            "vue/html-closing-bracket-spacing": "error",
+            "vue/no-unused-components": "warn",
+            "vue/no-unused-vars": "warn",
+            "vue/no-v-html": "off",
+            "vue/require-default-prop": "off"
+        }
     },
     "browserslist": [
         "> 1%",

@@ -1,5 +1,7 @@
 <template>
-  <div v-if="deviceList" class="d-flex mb-2">
+  <div v-if="deviceList"
+class="d-flex mb-2"
+>
     <v-btn-toggle
       class="py-2"
       color="#212121"
@@ -23,16 +25,16 @@
 </template>
 
 <script lang="ts">
-export default {
-  name: "Devices",
-  props: ["deviceList"],
-  data: () => ({}),
-  mounted: function () {},
-  watch: {},
-  methods: {
-    handleSelectPlayer(location) {
-      this.$emit("location", location);
+  export default {
+    name: "DeviceList",
+    props: ["deviceList"],
+    data: () => ({}),
+    mounted: function () {},
+    watch: {},
+    methods: {
+      handleSelectPlayer(location) {
+        this.$emit("location", location);
+      },
     },
-  },
-};
+  };
 </script>

@@ -6,5 +6,5 @@ export const userStore = defineStore('userStore',{
   getters: {
   },
   actions: {
-  }
+  },
 })

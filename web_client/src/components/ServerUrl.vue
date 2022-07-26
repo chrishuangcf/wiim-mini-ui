@@ -9,9 +9,10 @@
             class="text-white"
             color="#EA80FC"
           ></v-text-field>
-          <v-btn color="#EA80FC" class="mr-4" @click="handleUpdateServerUrl"
-            >Save</v-btn
-          >
+          <v-btn color="#EA80FC"
+class="mr-4"
+@click="handleUpdateServerUrl"
+>Save</v-btn>
         </v-col>
         <v-col cols="2"> </v-col>
       </v-row>
@@ -20,17 +21,17 @@
 </template>
 
 <script lang="ts">
-export default {
-  name: "ServerUrl",
-  data: () => ({
-    updatedServerUrl: "",
-  }),
-  mounted: function () {},
-  watch: {},
-  methods: {
-    handleUpdateServerUrl() {
-      this.$emit("updatedServerUrl", this.updatedServerUrl);
+  export default {
+    name: "ServerUrl",
+    data: () => ({
+      updatedServerUrl: "",
+    }),
+    mounted: function () {},
+    watch: {},
+    methods: {
+      handleUpdateServerUrl() {
+        this.$emit("updatedServerUrl", this.updatedServerUrl);
+      },
     },
-  },
-};
+  };
 </script>

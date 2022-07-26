@@ -1,6 +1,8 @@
 <template>
   <v-card>
-    <v-avatar size="100%" rounded="0">
+    <v-avatar size="100%"
+rounded="0"
+>
       <v-img
         :src="`${imgUrl}`"
         aspect-ratio="1/1"
@@ -8,7 +10,10 @@
         class="bg-grey-lighten-2 align-end text-white"
       >
         <template v-slot:placeholder>
-          <v-row class="fill-height ma-0" align="center" justify="center">
+          <v-row class="fill-height ma-0"
+align="center"
+justify="center"
+>
             <v-progress-circular
               indeterminate
               color="grey-lighten-5"
@@ -21,12 +26,12 @@
 </template>
 
 <script lang="ts">
-export default {
-  name: "AlbumArt",
-  props: ["imgUrl"],
-  data: () => ({}),
-  mounted: function () {},
-  watch: {},
-  methods: {},
-};
+  export default {
+    name: "AlbumArt",
+    props: ["imgUrl"],
+    data: () => ({}),
+    mounted: function () {},
+    watch: {},
+    methods: {},
+  };
 </script>

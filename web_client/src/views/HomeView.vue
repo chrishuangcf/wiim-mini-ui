@@ -1,10 +1,11 @@
 <script setup lang="ts">
+import * as Types from "../types/types";
 import ToolBar from "@/components/ToolBar.vue";
 import AlbumArt from "@/components/AlbumArt.vue";
 import SongSpecs from "@/components/SongSpecs.vue";
 import Biography from "@/components/Biography.vue";
 import ServerUrl from "@/components/ServerUrl.vue";
-import Devices from "@/components/Devices.vue";
+import DeviceList from "@/components/DeviceList.vue";
 import CoverArt from "@/assets/cover.jpg";
 </script>
 
@@ -65,7 +66,7 @@ import CoverArt from "@/assets/cover.jpg";
           </div>
         </v-card>
         <v-card color="#263238" theme="dark">
-          <Devices
+          <DeviceList
             :deviceList="deviceList"
             @location="postInit"
             v-if="toggles.devices"
@@ -123,7 +124,14 @@ export default {
       timer: 0,
     };
   },
-  components: { ToolBar, AlbumArt, SongSpecs, Biography, Devices, ServerUrl },
+  components: {
+    ToolBar,
+    AlbumArt,
+    SongSpecs,
+    Biography,
+    DeviceList,
+    ServerUrl,
+  },
   created() {
     this.fetchDeviceList();
     this.timer = setInterval(this.fetchRefreshData, 1000);
@@ -146,7 +154,7 @@ export default {
       await this.fetchPlayerStatus();
     },
     fetchMetadata: async function () {
-      const data = await lib.fetchMetadata();
+      const data: Types.metadataType = await lib.fetchMetadata();
       this.metadata = {
         albumArtist: data.albumArtist || "",
         albumTitle: data.albumTitle || "",
