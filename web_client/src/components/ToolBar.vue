@@ -7,6 +7,9 @@
       <v-btn icon v-on:click="handleShowDevices()"
         ><v-icon>mdi-speaker-wireless</v-icon></v-btn
       >
+      <v-btn icon v-if="playerStatus === 'TRANSITIONING' && seletedRenderer">
+        <v-icon>mdi-timer-sand</v-icon>
+      </v-btn>
       <v-btn
         icon
         v-if="playerStatus === 'PAUSED_PLAYBACK' && seletedRenderer"
