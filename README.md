@@ -89,24 +89,23 @@ Reported by users, the building tools might not properly compile on Windows 11. 
 
 ## How to use
 
-When you first landed on the web app. You should see an input box for you to enter your server location. (This is your computer IP address where you are running the server from).
-<img title="Select a Media Renderer" alt="Alt text" src="./assets/setup1.jpg">
-
-You will then need to click on the **SPEAKER** icon to select a Media Renderer on your own network. You should be able to see the screen as follows.
+You will then need to click on the **SPEAKER** icon to select a Media Renderer on your own network. You should be able to see the screen as follows. Keep in mind! You will need to select a Media Renderer first. Otherwise you won't be able to control playback/pause/next on it.
 <img title="Select a Media Renderer" alt="Alt text" src="./assets/select_player.jpg">
 
 When you click on the artist name (a pink button), that should bring up a card below the main player.
 <img title="Select a Media Renderer" alt="Alt text" src="./assets/display_biography.jpg">
 
-It's obvious that this web app can run under any device with a browser. Here are screenshots on my TV and my Amazon Echo Show 5
-<img title="Select a Media Renderer" alt="Alt text" src="./assets/on_tv.jpg">
-<img title="Select a Media Renderer" alt="Alt text" src="./assets/on_echo.jpg">
+The server location should host both the **wiim_server** and web app from the same server. However, occasionally during the development, you may have a web app and wiim_server running on different machines or different ports. You may click on the **SETUP** icon to change the IP address.
+<img title="Select a Media Renderer" alt="Alt text" src="./assets/setup1.jpg">
 
 ## Change Logs
 
 - 7/25/22
 
-  - removed hard coded server url. add a new input text field for user to enter their own server ip address to initialize the service with wiim_server.
+  - Allow to change server IP address. (The setup icon)
+  - Automatically use the default server IP address to start the web app.
+  - Hide controller buttons before the user selects a media renderer. (It will cause server crash to force control without a media renderer had been selected
+  - Moved the **Media Renderers** under the main display screen to allow more room for long device names.
 
 - 7/24/22
   - moved backend from RESTful requests into Websocket communication to give real time feedback

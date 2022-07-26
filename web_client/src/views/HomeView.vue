@@ -3,6 +3,7 @@ import ToolBar from "@/components/ToolBar.vue";
 import AlbumArt from "@/components/AlbumArt.vue";
 import SongSpecs from "@/components/SongSpecs.vue";
 import Biography from "@/components/Biography.vue";
+import ServerUrl from "@/components/ServerUrl.vue";
 import Devices from "@/components/Devices.vue";
 import CoverArt from "@/assets/cover.jpg";
 </script>
@@ -50,16 +51,12 @@ import CoverArt from "@/assets/cover.jpg";
                   </v-btn>
                 </v-card-text>
                 <div style="position: absolute; bottom: 0px; width: 100%">
-                  <Devices
-                    :deviceList="deviceList"
-                    @location="postInit"
-                    v-if="toggles.devices"
-                  />
                   <ToolBar
                     :playerStatus="playerStatus"
+                    :seletedRenderer="seletedRenderer"
                     @player="postActions"
+                    @showServerUrl="toggleServerUrl"
                     @showDevices="toggleDeviceList"
-                    @updateServerUrl="postServeUrl"
                     color="#424242"
                   />
                 </div>
@@ -67,7 +64,21 @@ import CoverArt from "@/assets/cover.jpg";
             </v-col>
           </div>
         </v-card>
-        <v-card color="#37474F" v-if="toggles.bio">
+        <v-card color="#263238" theme="dark">
+          <Devices
+            :deviceList="deviceList"
+            @location="postInit"
+            v-if="toggles.devices"
+          />
+        </v-card>
+        <v-card color="#263238">
+          <ServerUrl
+            color="white"
+            @updatedServerUrl="postServeUrl"
+            v-if="toggles.serverUrl"
+          />
+        </v-card>
+        <v-card color="#616161" v-if="toggles.bio">
           <Biography :bioText="artistBio" :artist="metadata.artist" />
         </v-card>
       </v-col>
@@ -105,12 +116,14 @@ export default {
       toggles: {
         bio: false,
         devices: false,
+        serverUrl: false,
       },
+      seletedRenderer: undefined,
       deviceList: undefined,
       timer: 0,
     };
   },
-  components: { ToolBar, AlbumArt, SongSpecs, Biography, Devices },
+  components: { ToolBar, AlbumArt, SongSpecs, Biography, Devices, ServerUrl },
   created() {
     this.fetchDeviceList();
     this.timer = setInterval(this.fetchRefreshData, 1000);
@@ -172,14 +185,19 @@ export default {
       this.fetchDeviceList();
       this.toggles.devices = showDevices;
     },
-    postInit: (location: string) => {
+    toggleServerUrl: function (showServerUrl: boolean) {
+      this.toggles.serverUrl = showServerUrl;
+    },
+    postInit: function (location: string) {
+      this.seletedRenderer = location;
       lib.postInit(location);
     },
-    postActions: (action: string) => {
+    postActions: function (action: string) {
       lib.postPlayerActions(action);
     },
-    postServeUrl: (serverUrl: string) => {
-      lib.init(serverUrl);
+    postServeUrl: function (updatedServerUrl: string) {
+      this.toggleServerUrl(false);
+      lib.init(updatedServerUrl);
     },
     cancelAutoUpdate() {
       clearInterval(this.timer);

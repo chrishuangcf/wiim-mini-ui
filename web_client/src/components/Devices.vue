@@ -1,13 +1,20 @@
 <template>
-  <div>
-    <v-btn-toggle class="py-2" color="#607D8B" dark size="xs">
+  <div v-if="deviceList" class="d-flex mb-2">
+    <v-btn-toggle
+      class="py-2"
+      color="#212121"
+      dark
+      size="xs"
+      style="margin-top: 0.25em"
+    >
       <v-btn
         v-for="device in deviceList"
         :key="device"
-        color="white"
-        variant="outlined"
+        color="#EA80FC"
+        variant="flat"
         rounded="sm"
         v-on:click="handleSelectPlayer(`${device.location}`)"
+        style="margin-left: 0.5em"
       >
         {{ device.friendlyName }}
       </v-btn>

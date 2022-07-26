@@ -3,7 +3,7 @@ import { SERVER_PORT } from "../constants/Constants";
 import { io } from "socket.io-client";
 
 export class Utilities {
-  private serverUrl: string = undefined;
+  private serverUrl: string = window.location.origin;
   private defaultData: metadataType = {
     albumArtist: "",
     albumTitle: "",
@@ -23,7 +23,9 @@ export class Utilities {
 
   private socket: any;
 
-  constructor() {}
+  constructor() {
+    this.socket = io(this.serverUrl);
+  }
 
   init(serverUrl: string) {
     this.serverUrl = `http://${serverUrl}:${SERVER_PORT}`;

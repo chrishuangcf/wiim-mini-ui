@@ -1,40 +1,27 @@
 <template>
   <div color="#424242" dark prominent class="justify-space-around">
-    <v-form v-if="!toggleInitInput">
-      <v-container>
-        <v-row>
-          <v-col cols="12">
-            wiim_server location : ex: 192.168.0.1
-            <v-text-field
-              v-model="updatedServerUrl"
-              label="Regular"
-            ></v-text-field>
-            <v-btn color="success" class="mr-4" @click="handleUpdateServerUrl"
-              >Set</v-btn
-            >
-          </v-col>
-        </v-row>
-      </v-container>
-    </v-form>
     <v-btn-toggle rounded="lg" class="py-2" color="#607D8B" dark size="xs">
+      <v-btn icon v-on:click="handleToggleSetup()"
+        ><v-icon>mdi-cog</v-icon></v-btn
+      >
       <v-btn icon v-on:click="handleShowDevices()"
         ><v-icon>mdi-speaker-wireless</v-icon></v-btn
       >
       <v-btn
         icon
-        v-if="playerStatus === 'PAUSED_PLAYBACK'"
+        v-if="playerStatus === 'PAUSED_PLAYBACK' && seletedRenderer"
         v-on:click="handleClick('Play')"
       >
         <v-icon>mdi-play</v-icon>
       </v-btn>
       <v-btn
         icon
-        v-if="playerStatus === 'PLAYING'"
+        v-if="playerStatus === 'PLAYING' && seletedRenderer"
         v-on:click="handleClick('Pause')"
       >
         <v-icon>mdi-pause</v-icon>
       </v-btn>
-      <v-btn icon>
+      <v-btn icon v-if="seletedRenderer">
         <v-icon v-on:click="handleClick('Next')">mdi-skip-next</v-icon>
       </v-btn>
     </v-btn-toggle>
@@ -45,11 +32,10 @@
 <script lang="ts">
 export default {
   name: "ToolBar",
-  props: ["playerStatus"],
+  props: ["playerStatus", "seletedRenderer"],
   data: () => ({
-    toggle: false,
-    toggleInitInput: false,
-    updatedServerUrl: "",
+    toggleDevices: false,
+    toggleServerUrl: false,
   }),
   mounted: function () {},
   watch: {},
@@ -58,12 +44,12 @@ export default {
       this.$emit("player", action);
     },
     handleShowDevices() {
-      this.toggle = !this.toggle;
-      this.$emit("showDevices", this.toggle);
+      this.toggleDevices = !this.toggleDevices;
+      this.$emit("showDevices", this.toggleDevices);
     },
-    handleUpdateServerUrl() {
-      this.toggleInitInput = !this.toggleInitInput;
-      this.$emit("updateServerUrl", this.updatedServerUrl);
+    handleToggleSetup() {
+      this.toggleServerUrl = !this.toggleServerUrl;
+      this.$emit("showServerUrl", this.toggleServerUrl);
     },
   },
 };
