@@ -81,19 +81,19 @@ If you wish to run this web app anywhere else, such as a mini Single Board Compu
 
 ### how to make wiim_server service persist and automatically load when booting Raspberry Pi
 
-1. sudo npm install -g pm2 (install pm2)
-2. pm2 start server.js (starting wiim_server)
+1. `sudo npm install -g pm2` (install pm2)
+2. `pm2 start server.js` (starting wiim_server)
 
 - You should be able to see **App name** Server running
 
-3. pm2 startup systemd (generate a script that will launch PM2)
-4. copy the last line starts with **sudo env PATH=$PATH/....** and paste into the terminal and run it
-5. pm2 save (save current state of PM2 with server.js running)
+3. `pm2 startup systemd` (generate a script that will launch PM2)
+4. copy the last line starts with **`sudo env PATH=$PATH/....`** and paste into the terminal and run it
+5. `pm2 save` (save current state of PM2 with server.js running)
 6. you will be able to check anytime for the status by commands :
 
-- pm2 list (list of services running under pm2)
-- pm2 status (status of pm2)
-  = pm2 show server (this will show wiim_server in details)
+- `pm2 list` (list of services running under pm2)
+- `pm2 status` (status of pm2)
+- `pm2 show server` (this will show wiim_server in details)
 
 ### If you are haveing build issues, want to skip the whole building process
 
