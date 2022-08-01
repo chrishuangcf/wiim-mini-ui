@@ -19,6 +19,7 @@ export class Utilities {
     biography: "",
     streamSource: "",
     songDuration: "",
+    realTime: "",
   };
 
   private socket: any;
@@ -190,9 +191,11 @@ export class Utilities {
         ? this.frequence(data["song:rate_hz"][0])
         : 0;
       this.defaultData.songBitrate = this.bitrate(
-        data["song:bitrate"] ? data["song:bitrate"][0] : 0
+        data["track:bitrate"] ? data["song:bitrate"][0] : 0
       );
       this.defaultData.streamSource = streamSource;
+      this.defaultData.songDuration = data["track:duration"];
+      this.defaultData.realTime = data["rel:time"];
 
       // local dlna media server
       const currentSong = data["res"][0]["$"];

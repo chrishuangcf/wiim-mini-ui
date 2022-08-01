@@ -29,19 +29,37 @@
       </v-btn>
     </v-btn-toggle>
     <v-spacer></v-spacer>
+    <div>
+      <v-slider
+        v-model="currentPos"
+        color="purple"
+        class="align-center"
+        thumb-color="purple"
+        thumb-label="always"
+        max="100"
+        min="0"
+        readonly
+      >
+      </v-slider>
+    </div>
   </div>
 </template>
 
 <script lang="ts">
 export default {
   name: "ToolBar",
-  props: ["playerStatus", "seletedRenderer"],
+  props: [
+    "playerStatus",
+    "seletedRenderer",
+    "songDuration",
+    "realTime",
+    "currentPos",
+  ],
   data: () => ({
     toggleDevices: false,
     toggleServerUrl: false,
   }),
   mounted: function () {},
-  watch: {},
   methods: {
     handleClick(action: string) {
       this.$emit("player", action);

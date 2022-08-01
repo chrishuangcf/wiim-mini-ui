@@ -55,6 +55,9 @@ import CoverArt from "@/assets/cover.jpg";
                   <ToolBar
                     :playerStatus="playerStatus"
                     :seletedRenderer="seletedRenderer"
+                    :realTime="metadata.realTime"
+                    :songDuration="metadata.songDuration"
+                    :currentPos="currentPos"
                     @player="postActions"
                     @showServerUrl="toggleServerUrl"
                     @showDevices="toggleDeviceList"
@@ -89,6 +92,7 @@ import CoverArt from "@/assets/cover.jpg";
 
 <script lang="ts">
 import { Utilities } from "../actions/lib";
+import { SliderPosition } from "../actions/ui-lib";
 
 const lib = new Utilities();
 
@@ -109,11 +113,14 @@ export default {
         artist: "",
         album: "Album Title",
         streamSource: "",
+        songDuration: "",
+        realTime: "",
       },
       playerStatus: "PAUSED_PLAYBACK",
       artistBio: "",
       currentArtist: "",
       displayArtistShortName: "",
+      currentPos: 0,
       toggles: {
         bio: false,
         devices: false,
@@ -168,10 +175,16 @@ export default {
         artist: data.artist || "",
         album: data.album || "",
         streamSource: data.streamSource || "",
+        songDuration: data.songDuration || "",
+        realTime: data.realTime || "",
       };
       this.currentArtist = this.metadata.artist;
       this.currentSong = this.metadata.songTitle;
       this.displayArtistShortName = this.displayShortName(this.metadata.artist);
+      this.currentPos = await SliderPosition(
+        this.metadata.songDuration,
+        this.metadata.realTime
+      );
     },
     fetchArtistBio: async function () {
       this.artistBio = await lib.fetchBiography();

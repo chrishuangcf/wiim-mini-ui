@@ -13,6 +13,7 @@ export type metadataType = {
   biography: string;
   streamSource: string;
   songDuration: string;
+  realTime: string;
 };
 
 export type playerType = {
