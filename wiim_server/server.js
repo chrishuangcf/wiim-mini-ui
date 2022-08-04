@@ -82,6 +82,25 @@ app.use((req, res, next) => {
   next();
 });
 
+const trackSource = (spotify, trackSource) => {
+  // Spotify specific signature
+  if (spotify === "1") {
+    return "spotify";
+  }
+
+  // BubbleUPnP clients
+  if (selectedDevice.manufacturer.indexOf("Bubblesoft") >= 0) {
+    return "upnpserver";
+  }
+
+  // Other track source based on WiiM Mini Specific properties
+  if (trackSource) {
+    return trackSource.toLowerCase();
+  }
+
+  return "upnpserver";
+};
+
 // ==================== upnpClient ====================
 io.on("connection", (socket) => {
   socket.broadcast.emit("bridge server started");
@@ -141,12 +160,10 @@ io.on("connection", (socket) => {
                   "track:duration": result.TrackDuration,
                   "rel:time": result.RelTime,
                   "player:playmedium": result.PlayMedium,
-                  "player:tracksource":
-                    result.SpotifyActive === "1"
-                      ? "spotify"
-                      : selectedDevice.manufacturer.indexOf("Bubblesoft") < 0
-                      ? result.TrackSource.toLowerCase()
-                      : "upnpserver",
+                  "player:tracksource": trackSource(
+                    result.SpotifyActive,
+                    result.TrackSource
+                  ),
                   "player:volume": result.CurrentVolume,
                   "player:loopmode": result.LoopMode,
                 };
