@@ -23,7 +23,7 @@
                 justify-content: space-between;
                 width: 100%;
                 background-color: rgba(37, 27, 43, 0.5);
-                margin-bottom: -10px;
+                margin-bottom: -5px;
               "
             >
               <span
