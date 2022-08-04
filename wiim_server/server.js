@@ -23,7 +23,8 @@ app.use(bodyParser.json());
 
 let xml = "";
 let devices = {};
-let playerStatus = "No player";
+let devicesByLocation = [];
+let selectedDevice = undefined;
 var upnpClient = undefined;
 
 // ==================== pulling upnp devices ====================
@@ -44,14 +45,21 @@ ssdpClient.on("response", (resp) => {
                 throw err;
               }
               const temp = completeResponse.root.device[0];
-              devices[temp.friendlyName[0]] = {
+              const deviceInfo = {
                 location: resp.LOCATION,
+                manufacturer: temp.manufacturer ? temp.manufacturer[0] : "",
+              };
+              const extendedInfo = {
                 deviceType: temp.deviceType ? temp.deviceType[0] : "",
                 friendlyName: temp.friendlyName ? temp.friendlyName[0] : "",
-                manufacturer: temp.manufacturer ? temp.manufacturer[0] : "",
                 ssidName: temp.ssidName ? temp.ssidName[0] : "",
                 uuid: temp.uuid ? temp.uuid[0] : "",
               };
+              devices[temp.friendlyName[0]] = {
+                ...extendedInfo,
+                ...deviceInfo,
+              };
+              devicesByLocation.push(deviceInfo);
             }
           );
         });
@@ -81,6 +89,9 @@ io.on("connection", (socket) => {
   socket.on("init", (location) => {
     if (location !== "") {
       upnpClient = new UPNP(location);
+      selectedDevice = devicesByLocation.filter(
+        (dev) => dev.location === location
+      )[0];
       console.log(`Device XML ${location} had been selected by a client`);
     }
   });
@@ -98,7 +109,9 @@ io.on("connection", (socket) => {
     if (upnpClient) {
       upnpClient.callAction(
         "AVTransport",
-        "GetInfoEx", // "GetPositionInfo",
+        selectedDevice.manufacturer.indexOf("Linkplay") >= 0
+          ? "GetInfoEx"
+          : "GetPositionInfo",
         { InstanceID: 0 },
         (err, result) => {
           if (err) throw err;
@@ -131,7 +144,9 @@ io.on("connection", (socket) => {
                   "player:tracksource":
                     result.SpotifyActive === "1"
                       ? "spotify"
-                      : result.TrackSource.toLowerCase(),
+                      : selectedDevice.manufacturer.indexOf("Bubblesoft") < 0
+                      ? result.TrackSource.toLowerCase()
+                      : "upnpserver",
                   "player:volume": result.CurrentVolume,
                   "player:loopmode": result.LoopMode,
                 };
