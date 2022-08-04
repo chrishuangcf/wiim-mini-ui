@@ -16,7 +16,14 @@ import CoverArt from "@/assets/cover.jpg";
         <v-card color="#263238" theme="dark">
           <div class="d-flex flex-row justify-space-around">
             <v-col cols="5">
-              <AlbumArt :imgUrl="metadata.albumUrl" />
+              <AlbumArt
+                :imgUrl="metadata.albumUrl"
+                :realTime="metadata.realTime"
+                :songDuration="metadata.songDuration"
+                :currentPos="currentPos"
+                :volume="metadata.volume"
+                :loopMode="metadata.loopMode"
+              />
             </v-col>
             <v-col cols="7">
               <v-card color="#212121" height="100%">
@@ -51,7 +58,7 @@ import CoverArt from "@/assets/cover.jpg";
                     {{ displayArtistShortName }}
                   </v-btn>
                 </v-card-text>
-                <div style="position: absolute; bottom: 0px; width: 100%">
+                <div style="width: 100%">
                   <ToolBar
                     :playerStatus="playerStatus"
                     :seletedRenderer="seletedRenderer"
@@ -68,21 +75,26 @@ import CoverArt from "@/assets/cover.jpg";
             </v-col>
           </div>
         </v-card>
+      </v-col>
+    </v-row>
+    <v-row v-if="toggles.devices">
+      <v-col cols="12">
         <v-card color="#263238" theme="dark">
-          <DeviceList
-            :deviceList="deviceList"
-            @location="postInit"
-            v-if="toggles.devices"
-          />
+          <DeviceList :deviceList="deviceList" @location="postInit" />
         </v-card>
+      </v-col>
+    </v-row>
+    <v-row v-if="toggles.serverUrl">
+      <v-col cols="12">
         <v-card color="#263238">
-          <ServerUrl
-            color="white"
-            @updatedServerUrl="postServeUrl"
-            v-if="toggles.serverUrl"
-          />
+          <ServerUrl color="white" @updatedServerUrl="postServeUrl" />
         </v-card>
-        <v-card color="#616161" v-if="toggles.bio">
+      </v-col>
+    </v-row>
+
+    <v-row>
+      <v-col cols="12" v-if="toggles.bio">
+        <v-card color="#616161">
           <Biography :bioText="artistBio" :artist="metadata.artist" />
         </v-card>
       </v-col>
@@ -115,6 +127,8 @@ export default {
         streamSource: "",
         songDuration: "",
         realTime: "",
+        volume: 0,
+        loopMode: 0,
       },
       playerStatus: "PAUSED_PLAYBACK",
       artistBio: "",
@@ -162,6 +176,10 @@ export default {
     },
     fetchMetadata: async function () {
       const data: Types.metadataType = await lib.fetchMetadata();
+      const { length, current, percent } = await SliderPosition(
+        data.songDuration,
+        data.realTime
+      );
       this.metadata = {
         albumArtist: data.albumArtist || "",
         albumTitle: data.albumTitle || "",
@@ -175,16 +193,15 @@ export default {
         artist: data.artist || "",
         album: data.album || "",
         streamSource: data.streamSource || "",
-        songDuration: data.songDuration || "",
-        realTime: data.realTime || "",
+        songDuration: length,
+        realTime: current,
+        volume: data.volume || 0,
+        loopMode: data.loopMode || 0,
       };
       this.currentArtist = this.metadata.artist;
       this.currentSong = this.metadata.songTitle;
       this.displayArtistShortName = this.displayShortName(this.metadata.artist);
-      this.currentPos = await SliderPosition(
-        this.metadata.songDuration,
-        this.metadata.realTime
-      );
+      this.currentPos = percent;
     },
     fetchArtistBio: async function () {
       this.artistBio = await lib.fetchBiography();

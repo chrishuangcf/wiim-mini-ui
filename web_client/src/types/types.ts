@@ -14,6 +14,8 @@ export type metadataType = {
   streamSource: string;
   songDuration: string;
   realTime: string;
+  volume: number;
+  loopMode: number;
 };
 
 export type playerType = {

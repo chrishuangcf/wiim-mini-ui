@@ -94,16 +94,15 @@ io.on("connection", (socket) => {
   });
 
   socket.on("metadata", () => {
+    let mergeData = {};
     if (upnpClient) {
       upnpClient.callAction(
         "AVTransport",
-        "GetPositionInfo",
+        "GetInfoEx", // "GetPositionInfo",
         { InstanceID: 0 },
         (err, result) => {
           if (err) throw err;
-          const trackDuration = result.TrackDuration;
           const metadata = result.TrackMetaData;
-          const relTime = result.RelTime;
           if (metadata) {
             const metaReq = xml2js.parseString(
               metadata,
@@ -111,10 +110,30 @@ io.on("connection", (socket) => {
                 if (err) {
                   throw err;
                 }
-                const mergeData = {
+                /* PlayMedium : SONGLIST-NETWORK / RADIO-NETWORK / STATION-NETWORK / UNKOWN
+                 *
+                 * TrackSource : Prime / Qobuz / SPOTIFY / newTuneIn / iHeartRadio / Deezer / UPnPServer
+                 *
+                 * LoopMode :
+                 * repeat / no shuffle 0
+                 * repeat 1 / no shuffle 1
+                 * repeat / shuffle 2
+                 * no repeat / shuffle 3
+                 * no repeat / no shuffle 4
+                 * repeat 1 / shuffle 5
+                 */
+
+                mergeData = {
                   ...metadataJson["DIDL-Lite"]["item"][0],
-                  "track:duration": trackDuration,
-                  "rel:time": relTime,
+                  "track:duration": result.TrackDuration,
+                  "rel:time": result.RelTime,
+                  "player:playmedium": result.PlayMedium,
+                  "player:tracksource":
+                    result.SpotifyActive === "1"
+                      ? "spotify"
+                      : result.TrackSource.toLowerCase(),
+                  "player:volume": result.CurrentVolume,
+                  "player:loopmode": result.LoopMode,
                 };
                 socket.emit("metadata", mergeData);
               }

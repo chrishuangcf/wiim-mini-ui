@@ -4,7 +4,7 @@ import { io } from "socket.io-client";
 
 export class Utilities {
   private serverUrl: string = window.location.origin;
-  private defaultData: metadataType = {
+  private data: metadataType = {
     albumArtist: "",
     albumTitle: "",
     albumUrl: "",
@@ -20,6 +20,8 @@ export class Utilities {
     streamSource: "",
     songDuration: "",
     realTime: "",
+    volume: 0,
+    loopMode: 0,
   };
 
   private socket: any;
@@ -78,8 +80,8 @@ export class Utilities {
   async fetchBiography() {
     if (this.socket) {
       if (this.serverUrl) {
-        const artist = this.urlDecode(this.defaultData.artist);
-        // const album = this.urlDecode(this.defaultData.albumTitle);
+        const artist = this.urlDecode(this.data.artist);
+        // const album = this.urlDecode(this.data.albumTitle);
 
         const storedData = localStorage.getItem(artist);
         if (storedData) {
@@ -116,7 +118,7 @@ export class Utilities {
           returnAudioQuality = 24;
         }
       }
-      if (streamSource === "amazon") {
+      if (streamSource === "prime") {
         if (songQuality === "HD") {
           returnAudioQuality = 16;
         }
@@ -143,20 +145,6 @@ export class Utilities {
     }
   }
 
-  streamSource(data: string): string {
-    let streamSource = "default";
-    if (data.indexOf("amazon") >= 0) {
-      streamSource = "amazon";
-    }
-    if (data.indexOf("qobuz") >= 0) {
-      streamSource = "qobuz";
-    }
-    if (data.indexOf("i.scdn.co") >= 0) {
-      streamSource = "spotify";
-    }
-    return streamSource;
-  }
-
   urlDecode(str: string): string {
     return encodeURIComponent(str);
   }
@@ -165,51 +153,49 @@ export class Utilities {
     const songQuality = data["song:actualQuality"]
       ? data["song:actualQuality"][0]
       : "";
-    const streamSource = this.streamSource(data["upnp:albumArtURI"][0]);
+    const streamSource = data["player:tracksource"] || "";
     if (data) {
-      this.defaultData.songTitle = data["dc:title"] ? data["dc:title"][0] : "";
-      this.defaultData.albumArtist = data["upnp:albumArtist"]
+      this.data.songTitle = data["dc:title"] ? data["dc:title"][0] : "";
+      this.data.albumArtist = data["upnp:albumArtist"]
         ? data["upnp:albumArtist"][0]
         : "";
-      this.defaultData.artist = data["upnp:artist"]
-        ? data["upnp:artist"][0]
-        : "";
-      this.defaultData.albumUrl = data["upnp:albumArtURI"]
+      this.data.artist = data["upnp:artist"] ? data["upnp:artist"][0] : "";
+      this.data.albumUrl = data["upnp:albumArtURI"]
         ? data["upnp:albumArtURI"][0]
         : "";
-      this.defaultData.albumTitle = data["upnp:album"]
-        ? data["upnp:album"][0]
-        : "";
-      this.defaultData.songFormat = data["song:format_s"]
+      this.data.albumTitle = data["upnp:album"] ? data["upnp:album"][0] : "";
+      this.data.songFormat = data["song:format_s"]
         ? data["song:format_s"][0]
         : "";
-      this.defaultData.songDepth = data["song:format_s"]
+      this.data.songDepth = data["song:format_s"]
         ? this.audioQuality(data["song:format_s"][0], streamSource, songQuality)
         : 0;
-      this.defaultData.songQuality = songQuality;
-      this.defaultData.songRate = data["song:rate_hz"]
+      this.data.songQuality = songQuality;
+      this.data.songRate = data["song:rate_hz"]
         ? this.frequence(data["song:rate_hz"][0])
         : 0;
-      this.defaultData.songBitrate = this.bitrate(
+      this.data.songBitrate = this.bitrate(
         data["track:bitrate"] ? data["song:bitrate"][0] : 0
       );
-      this.defaultData.streamSource = streamSource;
-      this.defaultData.songDuration = data["track:duration"];
-      this.defaultData.realTime = data["rel:time"];
+      this.data.streamSource = streamSource;
+      this.data.songDuration = data["track:duration"];
+      this.data.realTime = data["rel:time"];
+      this.data.volume = data["player:volume"];
+      this.data.loopMode = data["player:loopmode"];
 
       // local dlna media server
       const currentSong = data["res"][0]["$"];
 
       if (currentSong?.bitsPerSample) {
-        this.defaultData.songDepth = currentSong.bitsPerSample;
+        this.data.songDepth = currentSong.bitsPerSample;
       }
       if (currentSong?.bitrate) {
-        this.defaultData.songBitrate = this.bitrate(currentSong.bitrate);
+        this.data.songBitrate = this.bitrate(currentSong.bitrate);
       }
       if (currentSong?.sampleFrequency) {
-        this.defaultData.songRate = this.frequence(currentSong.sampleFrequency);
+        this.data.songRate = this.frequence(currentSong.sampleFrequency);
       }
     }
-    return this.defaultData;
+    return this.data;
   }
 }

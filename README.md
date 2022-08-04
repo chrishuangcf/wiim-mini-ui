@@ -2,11 +2,11 @@
 
 ### A simple UPnP audio Control Point
 
-This project was inspired by  Ralph Cramden on AudioScienceReview forum. The goal is to build a Web Control Point to display "Now Playing", "Album Art" and provide basic control over the Media Renderers on the local network.
+The goal of this project is to build a Web Control Point to display "Now Playing", "Album Art" and provide basic control over the Media Renderers on the local network.
 
 My initial intention was to build a lovely web app for my WiiM mini devices because I missed so much from volumio, logitech media server or roon. Hence, the project name was "WiiM mini UI". Since the web app does interact with all Media Renderers on your system. (As long as it supports proper UPnP. (Sorry for OpenHome users. I'll put that into my to-do list))
 
-Song metata will support **Local DLNA server**, **Spotify**, **Qobuz** and **Amazon Music**. I am sorry I am currently not a subscriber of **TIDAL**.
+Song metata will support **Local DLNA server**, **Spotify**, **Qobuz**, **iHeart Radio**, **tuneIn Radio**, **Deezer** and **Amazon Music**. I am sorry I am currently not a subscriber of **TIDAL**.
 
 ## Install
 
@@ -115,6 +115,11 @@ The server location should host both the **wiim_server** and web app from the sa
 <img title="Select a Media Renderer" alt="Alt text" src="./assets/setup1.jpg">
 
 ## Change Logs
+
+- 8/3/22
+
+  - Added track length, current playback time, shuffle mode, repeat mode, and volume on the cover art.
+    <img title="song duration" alt="Alt text" src="./assets/tracktime.jpg">
 
 - 7/25/22
 
