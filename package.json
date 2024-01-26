@@ -5,7 +5,7 @@
     "private": true,
     "main": "server.js",
     "scripts": {
-        "init": "cd web_client && npm install && cd .. && cd wimm_server && npm install",
+        "init": "cd web_client && sudo npm install && cd .. && cd wiim_server && sudo npm install && cd ..",
         "build": "cd web_client && npm run build",
         "serve": "rm -rf ./wiim_server/public && cp -R ./web_client/dist ./wiim_server/public && yarn server serve",
         "serve:ui": "yarn build && yarn serve"

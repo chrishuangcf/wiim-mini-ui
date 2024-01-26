@@ -1,15 +1,16 @@
-import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
+/**
+ * router/index.ts
+ *
+ * Automatic routes for `./src/pages/*.vue`
+ */
+
+// Composables
+import { createRouter, createWebHistory } from 'vue-router/auto'
+import { setupLayouts } from 'virtual:generated-layouts'
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
-  routes: [
-    {
-      path: '/',
-      name: 'HomeView',
-      component: HomeView,
-    },
-  ],
+  history: createWebHistory(process.env.BASE_URL),
+  extendRoutes: setupLayouts,
 })
 
 export default router
