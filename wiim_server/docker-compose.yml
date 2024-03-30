@@ -1,0 +1,35 @@
+version: "2.3"
+
+services:
+  wiim_service:
+    image: wiim_ui
+    container_name: wiim_ui
+    environment:
+      - DEBUG=node-ssdp:*
+    restart: "unless-stopped"
+    # network_mode: "host"
+    ports:
+      - "8080:8080"
+      - "1900:1900"
+      - "39726:39726"
+      - "56842:56842"
+    expose:
+      - "8200/tcp"
+      - "1900/udp"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    # networks:
+    #   lan:
+    #     ipv4_address: 10.0.4.123
+
+# networks:
+#   lan:
+#     name: lan
+#     driver: ipvlan
+#     driver_opts:
+#       parent: en0
+#       ipvlan_mode: l2
+#     ipam:
+#       config:
+#         - subnet: 10.0.4.0/16
+#           gateway: 10.0.4.1

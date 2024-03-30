@@ -133,6 +133,7 @@ export default {
       playerStatus: "PAUSED_PLAYBACK",
       artistBio: "",
       currentArtist: "",
+      currentSong: "",
       displayArtistShortName: "",
       currentPos: 0,
       toggles: {
@@ -140,9 +141,15 @@ export default {
         devices: false,
         serverUrl: false,
       },
-      seletedRenderer: undefined,
-      deviceList: undefined,
-      timer: 0,
+      seletedRenderer: '',
+      deviceList: [{
+        location: '',
+        deviceType: '',
+        friendlyName: '',
+        ssidName: '',
+        uuid: ''
+      }],
+      timer: {},
     };
   },
   components: {
@@ -207,7 +214,7 @@ export default {
       this.artistBio = await lib.fetchBiography();
     },
     fetchPlayerStatus: async function () {
-      this.playerStatus = await lib.postPlayerActions("status");
+        this.playerStatus = await lib.postPlayerActions("status");
     },
     displayShortName: function (artist: string) {
       if (artist.length > 50) {

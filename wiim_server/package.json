@@ -1,9 +1,12 @@
 {
-    "name": "@wiim_mini_ui/wiim_server",
-    "version": "0.0.1",
+    "name": "wiim_server",
+    "version": "0.0.2",
     "private": true,
     "scripts": {
-        "serve": "node server.js"
+        "serve": "node server.js",
+        "docker:build": "docker image inspect wiim_ui >/dev/null 2>&1 && docker image rm wiim_ui && docker build -t wiim_ui -f dockerfile.latest . || docker build -t wiim_ui -f dockerfile.latest .",
+        "docker:build:arm64": "docker image inspect wiim_ui >/dev/null 2>&1 && docker image rm wiim_ui && docker build -t wiim_ui -f dockerfile.arm64 . || docker build -t wiim_ui -f dockerfile.arm64 .",
+        "docker:run": "docker run -d --rm --name wiim_service -p 127.0.0.1:8080:8080 wiim_ui"
     },
     "dependencies": {
         "node-ssdp": "^4.0.1",
@@ -13,7 +16,7 @@
         "cheerio": "^1.0.0-rc.12",
         "express": "^4.18.1",
         "upnp-device-client": "^1.0.2",
-        "xml2js": "^0.4.23"
+        "xml2js": "^0.6.2"
     },
     "eslintConfig": {
         "root": true,

@@ -1,0 +1,11 @@
+FROM node
+WORKDIR /app
+ADD public /app/public
+COPY package.json /app/
+COPY server.js  /app/
+
+RUN npm install
+EXPOSE 8080
+EXPOSE 8200/tcp
+EXPOSE 1900/udp
+CMD [ "node", "server.js" ]pwd
