@@ -23,7 +23,7 @@
                 justify-content: space-between;
                 width: 100%;
                 background-color: rgba(37, 27, 43, 0.5);
-                margin-bottom: -5px;
+                margin-bottom: -25px;
               "
             >
               <span
@@ -89,7 +89,7 @@
         <v-row align="center" justify="center">
           <v-col cols="12">
             <v-progress-linear
-              v-model="props.currentPos"
+              model-value=props.currentPos
               color="purple-lighten-2"
               buffer-value="0"
               stream
@@ -108,8 +108,8 @@
     imgUrl : { type: String },
     songDuration: { type: String },
     realTime: { type: String},
-    currentPos: { type: String },
+    currentPos: { type: Number },
     volume: { type: Number },
-    loopMode: { type: String}
+    loopMode: { type: Number}
   })
 </script>

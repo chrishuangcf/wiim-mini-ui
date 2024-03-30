@@ -36,7 +36,7 @@ export class Utilities {
   }
 
   async fetchDeviceList() {
-    return new Promise((resolve, reject) => {
+    return new Promise<deviceListType>((resolve, reject) => {
       if (this.socket) {
         this.socket.emit("devices");
         this.socket.on("devices", (data: deviceListType) => {
@@ -48,7 +48,7 @@ export class Utilities {
   }
 
   fetchMetadata() {
-    return new Promise((resolve, reject) => {
+    return new Promise<metadataType>((resolve, reject) => {
       if (this.socket) {
         this.socket.emit("metadata");
         this.socket.on("metadata", (data: any) => {
@@ -64,36 +64,35 @@ export class Utilities {
   }
 
   postPlayerActions(playerAction: string) {
-    if (this.socket) {
-      if (this.serverUrl) {
-        return new Promise((resolve, reject) => {
+    return new Promise<string>((resolve, reject) => {
+      if (this.socket) {
+        if (this.serverUrl)
           this.socket.emit("actions", playerAction);
           this.socket.on("actions", (data: any) => {
             this.socket.off("actions");
             resolve(data);
           });
-        });
       }
-    }
+    });
   }
 
   async fetchBiography() {
-    if (this.socket) {
-      if (this.serverUrl) {
-        const artist = this.urlDecode(this.data.artist);
-        // const album = this.urlDecode(this.data.albumTitle);
+    return new Promise<string>((resolve, reject) => {
+      if (this.socket) {
+        if (this.serverUrl) {
+          const artist = this.urlDecode(this.data.artist);
+          // const album = this.urlDecode(this.data.albumTitle);
+  
+          const storedData = localStorage.getItem(artist);
+          if (storedData) {
+            return storedData;
+          }
+  
+          // handle extreme cases when unexpected search results happened
+          if (artist === "Various%20Artists") {
+            return "";
+          }
 
-        const storedData = localStorage.getItem(artist);
-        if (storedData) {
-          return storedData;
-        }
-
-        // handle extreme cases when unexpected search results happened
-        if (artist === "Various%20Artists") {
-          return "";
-        }
-
-        return new Promise((resolve, reject) => {
           this.socket.emit("biography", artist);
           this.socket.on("biography", (data: any) => {
             this.socket.off("biography");
@@ -101,18 +100,16 @@ export class Utilities {
             if (data !== "no data") {
               localStorage.setItem(artist, data);
               resolve(data);
-            } else {
-              resolve("");
             }
           });
-        });
+        }
       }
-    }
+    });
   }
 
   audioQuality(data: any, streamSource: string, songQuality: string): number {
+    let returnAudioQuality = data;
     if (this.socket) {
-      let returnAudioQuality = data;
       if (!isNaN(returnAudioQuality)) {
         if (data > 24) {
           returnAudioQuality = 24;
@@ -123,8 +120,8 @@ export class Utilities {
           returnAudioQuality = 16;
         }
       }
-      return returnAudioQuality;
     }
+    return returnAudioQuality;
   }
 
   frequence(data: any): number {
@@ -180,8 +177,8 @@ export class Utilities {
       this.data.streamSource = streamSource;
       this.data.songDuration = data["track:duration"];
       this.data.realTime = data["rel:time"];
-      this.data.volume = data["player:volume"];
-      this.data.loopMode = data["player:loopmode"];
+      this.data.volume = Number(data["player:volume"]);
+      this.data.loopMode = Number(data["player:loopmode"]);
 
       // local dlna media server
       const currentSong = data["res"][0]["$"];
