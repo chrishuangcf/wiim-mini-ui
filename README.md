@@ -8,75 +8,65 @@ My initial intention was to build a lovely web app for my WiiM mini devices beca
 
 Song metadata will support **Local DLNA server**, **Spotify**, **Qobuz**, **iHeart Radio**, **tuneIn Radio**, **Deezer** and **Amazon Music**. I am sorry I am currently not a subscriber of **TIDAL**.
 
-## 🚀 Quick Start
-
+## 🚀 Quick Start (Backend Native)
 ```bash
-# Install dependencies
+# Install dependencies (frontend + backend)
 npm run init
 
-# Terminal 1: Backend (required for UPnP)
+# Terminal 1: start backend (required for UPnP)
 npm run server:dev   # http://localhost:8080
 
-# Terminal 2: Frontend (choose one)
-# Dev (hot reload):
+# Terminal 2: start frontend (dev hot reload)
 npm run ui:dev       # http://localhost:5173
-# OR production container:
-npm run ui:docker    # http://localhost:3000
+```
+Optional build preview (static bundle only):
+```bash
+npm run build        # outputs web_client/dist
 ```
 
-Health chip (top-right) should turn green when backend is reachable. Click it for uptime, device count, selected device and errors.
+Optional frontend-only container (backend STILL native):
+```bash
+npm run ui:docker    # serves built assets at http://localhost:3000
+```
+> The backend is no longer containerized; docker-compose is not used.
 
 ## ⚙️ Run Modes
-| Mode | Frontend | Backend | UPnP Discovery | Use Case |
-|------|----------|---------|----------------|----------|
-| Dev (recommended) | Vite (5173) | Native | ✅ Full | Active development |
-| Hybrid | Docker (3000) | Native | ✅ Full | Test prod build |
-| Docker-only (macOS/Win) | Docker | Docker | ❌ None | Not supported for UPnP |
-| Linux Full Docker | Docker | Host net (Linux only) | ✅ Full | Production / Pi |
+| Mode | Frontend | Backend | UPnP | Notes |
+|------|----------|---------|------|-------|
+| Dev | Vite (5173) | Native 8080 | ✅ | Fast hot reload |
+| Build Preview | Dist via `ui:docker` | Native 8080 | ✅ | Production asset sanity check |
+| Static Deploy | Dist on any web server | Native 8080 (same LAN) | ✅ | Copy `dist/` to host |
 
 ## 🩺 Health Monitoring
-Backend `/health` endpoint returns:
+Backend exposes `/health`; UI chip polls every 10s.
 ```json
-{ "status": "ok", "uptime": 123, "services": { "upnp": {"status": "ok","deviceCount": 2}, "selectedDevice": {"status": "connected"}} }
+{"status":"ok","services":{"upnp":{"status":"ok","deviceCount":2}}}
 ```
-Component polls every 10s. Colors: Green=OK, Yellow=Degraded / no devices yet, Red=Offline.
+Colors: Green=OK, Yellow=No devices yet, Red=Backend unreachable.
 
-## 🛰️ UPnP & Docker Limitations (macOS / Windows)
-Multicast SSDP (239.255.255.250:1900 UDP) does not reach containers under Docker Desktop. `network_mode: host` is emulated and cannot expose your real NIC, so backend in Docker cannot discover devices. Solution: run backend natively. On Linux you may use `network_mode: host` for full discovery.
+## 🛰️ UPnP Notes (Why Native Backend)
+UPnP/SSDP uses multicast (239.255.255.250:1900 UDP). Desktop container runtimes (macOS/Windows) block this to containers; therefore backend runs directly on the host to see devices. No docker networking configuration is required anymore.
 
-### Summary
-- macOS / Windows: Backend must be native for UPnP.
-- Linux / Raspberry Pi: Host networking Docker works.
-- Macvlan is possible but overkill; not recommended for this project.
+## 🔌 Backend URL Resolution
+Order:
+1. `VITE_BACKEND_URL` env (e.g. `VITE_BACKEND_URL=http://192.168.1.20:8080`)
+2. Page origin
+3. Fallback `http://<host>:8080` after a socket connect error
 
-## 🔍 Quick Health Checklist
-| Symptom | Likely Cause | Fix |
-|---------|--------------|-----|
-| Health chip red | Backend not started | Run `npm run server:dev` |
-| Health green, 0 devices | UPnP blocked / device offline | Ensure same LAN, restart device, check firewall UDP 1900 |
-| Frontend fails to load data | Wrong port / backend stopped | Verify 8080 alive with `curl http://localhost:8080/health` |
-| Socket errors | Backend restart or network blip | Wait auto-retry / reload page |
+## 🔍 Quick Troubleshooting
+| Issue | Cause | Action |
+|-------|-------|--------|
+| Chip red | Backend not started | `npm run server:dev` |
+| 0 devices | Device offline / multicast delay | Ensure same LAN, wait few sec, restart device |
+| Frontend no data | Wrong backend URL | Set `VITE_BACKEND_URL` explicitly |
+| Socket errors | Transient network | Page reload or wait reconnect |
 
-## 🧪 Useful Commands
+## 🧪 Helpful Commands
 ```bash
-# Backend health
 curl http://localhost:8080/health
-
-# Watch SSDP traffic (macOS needs sudo)
-sudo tcpdump -i any 'udp port 1900'
-
-# List process using backend port
 lsof -i :8080
+sudo tcpdump -i any 'udp port 1900'
 ```
-
-## 🛠 Troubleshooting Flow
-1. Health chip color?
-2. `curl http://localhost:8080/health` → reachable?
-3. Device count = 0 → check network + firewall + restart renderer.
-4. Still failing → run backend natively (if not already).
-5. Check console logs (backend & browser DevTools).
-
----
 
 ## 🏗️ Architecture Overview
 
@@ -170,7 +160,7 @@ This project follows a modern web application architecture with a clear separati
 - **HTML Parsing**: cheerio (Metadata extraction)
 
 #### Infrastructure
-- **Containerization**: Docker & Docker Compose
+- **Containerization**: (Optional) Frontend-only container build (no backend container)
 - **Container Network**: Bridge network for inter-service communication
 - **SSL/TLS Support**: Configurable for corporate environments
 - **Build System**: Multi-stage Docker builds for optimized images
@@ -247,8 +237,6 @@ The backend implements standard UPnP AV Control Point functionality:
 
 ## 🐳 Docker Setup (Recommended)
 
-The easiest way to run this project is using Docker Compose. This method runs both the frontend and backend in isolated containers.
-
 ### Quick Start with Docker
 
 From the root directory, run:
@@ -266,29 +254,6 @@ This command will:
 
 - **Frontend**: http://localhost:3000
 - **Backend API**: http://localhost:8080
-
-### Docker Commands
-
-```bash
-# Start services
-docker compose up -d
-
-# Start with rebuild
-docker compose up --build -d
-
-# Stop services
-docker compose down
-
-# View logs (all services)
-docker compose logs -f
-
-# View logs (specific service)
-docker compose logs -f frontend
-docker compose logs -f backend
-
-# Restart services
-docker compose restart
-```
 
 ### Architecture
 
@@ -315,7 +280,6 @@ Choose one of the following setups:
 
 ### Option 1: Docker (Recommended)
 - **Docker Desktop**: [Download and install](https://www.docker.com/products/docker-desktop/)
-- **Docker Compose**: Included with Docker Desktop
 
 ### Option 2: Manual Installation
 - **Node.js**: Version 18 or higher ([Download](https://nodejs.org/))
@@ -372,8 +336,6 @@ These commands will first build the web app into a bundled, minified package. Th
 ---
 
 ### Deployment Mode
-
-**🐳 For Docker deployment**: Use `docker compose up --build -d` - see [Docker Setup](#-docker-setup-recommended) section.
 
 **For manual deployment** on a Raspberry Pi or other systems:
 
@@ -464,3 +426,19 @@ The server location should host both the **wiim_server** and web app from the sa
 
 2. Possibility to support OpenHome protocol for controlling the renderer (currently it will display metadata but fast track to next track won't work as OpenHome system design was to have playlist saved on individual "client". Therefore, it's not possible to advance to next track becauser there was no "next track" available). This will affect all BubbleUPnP renderers such as Chromcast, Volumio.
 3. Local UPnP Media Server would be able to stream more than just CD/Hi-Res options. The options would be LOSSY, LOSSLESS..etc... The metadata is sometimes very limited.
+
+## 🔌 Backend URL Configuration
+By default the frontend tries these in order:
+1. `VITE_BACKEND_URL` (env at build/dev time) e.g. `VITE_BACKEND_URL=http://192.168.1.50:8080`
+2. `window.location.origin` (same host/port)
+3. Fallback to `http://<host>:8080` on socket connect error
+
+During `npm run ui:dev`, Vite proxy (configured in `vite.config.mts`) forwards:
+- `/socket.io` → backend 8080
+- `/health` → backend 8080
+- `/api` → backend 8080
+
+Example:
+```bash
+VITE_BACKEND_URL=http://10.0.4.27:8080 npm run ui:dev
+```

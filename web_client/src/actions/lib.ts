@@ -1,9 +1,11 @@
 import type { metadataType, deviceListType } from "../types/types";
 import { SERVER_PORT } from "../constants/Constants";
-import { io } from "socket.io-client";
+import { io, Socket } from "socket.io-client";
+
+const ENV_BACKEND = (import.meta as any).env?.VITE_BACKEND_URL || process.env.VITE_BACKEND_URL || '';
 
 export class Utilities {
-  private serverUrl: string = window.location.origin;
+  private serverUrl: string = ENV_BACKEND || window.location.origin;
   private data: metadataType = {
     albumArtist: "",
     albumTitle: "",
@@ -23,16 +25,31 @@ export class Utilities {
     volume: 0,
     loopMode: 0,
   };
-
-  private socket: any;
+  private socket: Socket | null = null;
 
   constructor() {
-    this.socket = io(this.serverUrl);
+    this.connect();
+  }
+
+  private connect() {
+    try {
+      this.socket = io(this.serverUrl, { autoConnect: true, transports: ["websocket", "polling"] });
+      this.socket.on("connect_error", () => {
+        // fallback attempt if user opened frontend on different port
+        if (!ENV_BACKEND && this.serverUrl === window.location.origin) {
+          this.serverUrl = `${window.location.protocol}//${window.location.hostname}:8080`;
+          this.socket?.io.reconnect();
+        }
+      });
+    } catch (e) {
+      console.error("Socket init failed", e);
+    }
   }
 
   init(serverUrl: string) {
     this.serverUrl = `http://${serverUrl}:${SERVER_PORT}`;
-    this.socket = io(this.serverUrl);
+    this.socket?.disconnect();
+    this.connect();
   }
 
   async fetchDeviceList() {

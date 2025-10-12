@@ -12,11 +12,8 @@ import CoverArt from "@/assets/cover.jpg";
 
 <template>
   <v-container fluid>
-    <!-- Health Indicator in top-right corner -->
-    <div class="health-indicator-container">
-      <HealthIndicator />
-    </div>
-    <v-row dense>
+  <!-- Main player content -->
+  <v-row dense>
       <v-col cols="12">
         <v-card color="#263238" theme="dark">
           <div class="d-flex flex-row justify-space-around">
@@ -76,6 +73,9 @@ import CoverArt from "@/assets/cover.jpg";
                     color="#424242"
                   />
                 </div>
+                <div class="d-flex mt-2">
+                  <HealthIndicator />
+                </div>
               </v-card>
             </v-col>
           </div>
@@ -104,6 +104,7 @@ import CoverArt from "@/assets/cover.jpg";
         </v-card>
       </v-col>
     </v-row>
+
   </v-container>
 </template>
 
@@ -261,10 +262,4 @@ export default {
 </script>
 
 <style scoped>
-.health-indicator-container {
-  position: fixed;
-  top: 16px;
-  right: 16px;
-  z-index: 1000;
-}
 </style>
