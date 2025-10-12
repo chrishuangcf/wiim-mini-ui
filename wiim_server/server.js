@@ -75,13 +75,18 @@ const ssdpClient = new SSDPClient({
     false,
   interfaces: ssdpInterfaces.length ? ssdpInterfaces : undefined,
 });
-logDebug(
-  "SSDP client init",
-  JSON.stringify({
-    explicitSocketBind: ssdpClient.options.explicitSocketBind,
-    interfaces: ssdpInterfaces,
-  })
-);
+try {
+  const internalOpts = (ssdpClient && (ssdpClient.options || ssdpClient._opts)) || {};
+  logDebug(
+    "SSDP client init",
+    JSON.stringify({
+      explicitSocketBind: internalOpts.explicitSocketBind,
+      interfaces: ssdpInterfaces,
+    })
+  );
+} catch (e) {
+  logDebug("SSDP client init (options unavailable)", e.message);
+}
 
 let discoveryStats = {
   searches: 0,
