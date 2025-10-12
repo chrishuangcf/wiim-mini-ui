@@ -2,7 +2,6 @@ const express = require("express");
 const app = express();
 const http = require("http");
 const https = require("https");
-const SSDP = require("node-ssdp").Client;
 const UPNP = require("upnp-device-client");
 
 const path = require("path");
@@ -16,11 +15,11 @@ var io = require("socket.io")(webServer, {
     origin: "*",
   },
 });
-const ssdpClient = new SSDP();
 const os = require("os");
 
 // Verbose logging flag
-const UPNP_DEBUG = process.env.UPNP_DEBUG === "1" || process.env.UPNP_DEBUG === "true";
+const UPNP_DEBUG =
+  process.env.UPNP_DEBUG === "1" || process.env.UPNP_DEBUG === "true";
 
 function logDebug(...args) {
   if (UPNP_DEBUG) {
@@ -60,87 +59,48 @@ app.get("/health", (req, res) => {
 });
 
 // ==================== pulling upnp devices ====================
-if (UPNP_DEBUG) {
-  // Dump network interfaces to understand which NICs are available
-  const ifaces = os.networkInterfaces();
-  logDebug("Network interfaces:");
-  Object.keys(ifaces).forEach(name => {
-    ifaces[name].forEach(info => {
-      logDebug(`  ${name} -> address=${info.address} family=${info.family} internal=${info.internal} mac=${info.mac}`);
-    });
-  });
-  logDebug("Starting SSDP M-SEARCH for all devices (ssdp:all)");
-}
-
-// Perform repeated searches to improve discovery chances (some devices reply slowly)
-function performSearch(attempt = 1) {
-  logDebug(`Sending M-SEARCH attempt ${attempt}`);
-  try {
-    ssdpClient.search("ssdp:all");
-  } catch (e) {
-    logDebug("Error initiating search", e);
-  }
-  if (attempt < 5) {
-    setTimeout(() => performSearch(attempt + 1), 3000);
-  }
-}
-performSearch();
-
-ssdpClient.on("response", (resp, statusCode, rinfo) => {
-  logDebug("SSDP response from", rinfo && rinfo.address, "ST=", resp.ST, "USN=", resp.USN, "LOCATION=", resp.LOCATION);
-  if (resp.ST && resp.ST.indexOf("urn:schemas-upnp-org:device:MediaRenderer") >= 0) {
-    logDebug("MediaRenderer candidate -> fetching device XML", resp.LOCATION);
-    const gsaReq = http
-      .get(resp.LOCATION, function (response) {
-        var completeResponse = "";
-        response.on("data", function (chunk) {
-          completeResponse += chunk;
-        });
-        response.on("end", function () {
-          xml2js.parseString(completeResponse, (err, completeResponse) => {
-            if (err) {
-              logDebug("XML parse error", err.message);
-              return;
-            }
-            try {
-              const temp = completeResponse.root.device[0];
-              const deviceInfo = {
-                location: resp.LOCATION,
-                manufacturer: temp.manufacturer ? temp.manufacturer[0] : "",
-              };
-              const extendedInfo = {
-                deviceType: temp.deviceType ? temp.deviceType[0] : "",
-                friendlyName: temp.friendlyName ? temp.friendlyName[0] : "",
-                ssidName: temp.ssidName ? temp.ssidName[0] : "",
-                uuid: temp.uuid ? temp.uuid[0] : "",
-              };
-              devices[temp.friendlyName[0]] = { ...extendedInfo, ...deviceInfo };
-              // Avoid duplicate locations
-              if (!devicesByLocation.find(d => d.location === deviceInfo.location)) {
-                devicesByLocation.push(deviceInfo);
-              }
-              logDebug("Discovered MediaRenderer:", extendedInfo.friendlyName, extendedInfo.uuid, "manufacturer=", deviceInfo.manufacturer);
-            } catch (e) {
-              logDebug("Device processing error", e.message);
-            }
-          });
-        });
-      })
-      .on("error", function (e) {
-        logDebug("HTTP fetch error", e.message);
-      });
+const upnpClient = require("upnp-client");
+let upnpDiscovery = upnpClient();
+upnpDiscovery.on("device", (device) => {
+  logDebug(
+    "UPnP device discovered:",
+    device.friendlyName,
+    device.UDN,
+    device.location
+  );
+  // Only add MediaRenderer devices
+  if (
+    device.deviceType &&
+    device.deviceType.indexOf("urn:schemas-upnp-org:device:MediaRenderer") >= 0
+  ) {
+    const deviceInfo = {
+      location: device.location,
+      manufacturer: device.manufacturer || "",
+    };
+    const extendedInfo = {
+      deviceType: device.deviceType || "",
+      friendlyName: device.friendlyName || "",
+      ssidName: device.ssidName || "",
+      uuid: device.UDN ? device.UDN.replace("uuid:", "") : device.uuid || "",
+    };
+    if (extendedInfo.uuid) {
+      devices[extendedInfo.uuid] = { ...extendedInfo, ...deviceInfo };
+      if (!devicesByLocation.find((d) => d.location === deviceInfo.location)) {
+        devicesByLocation.push(deviceInfo);
+      }
+      logDebug(
+        "Discovered MediaRenderer (upnp-client):",
+        extendedInfo.friendlyName,
+        extendedInfo.uuid,
+        "manufacturer=",
+        deviceInfo.manufacturer
+      );
+    } else {
+      logDebug("Device missing uuid, skipping (upnp-client)");
+    }
   }
 });
-
-ssdpClient.on("advertise-alive", (hdr) => {
-  logDebug("NOTIFY alive", hdr.NT, hdr.USN, hdr.LOCATION);
-});
-ssdpClient.on("advertise-bye", (hdr) => {
-  logDebug("NOTIFY byebye", hdr.USN);
-});
-ssdpClient.on("error", (err) => {
-  logDebug("SSDP client error", err.message);
-});
+upnpDiscovery.search();
 
 // ==================== hosting UI ====================
 app.use(express.static(__dirname + "/public"));
@@ -184,7 +144,7 @@ io.on("connection", (socket) => {
         (dev) => dev.location === location
       )[0];
       console.log(`Device XML ${location} had been selected by a client`);
-  logDebug("Selected device object", selectedDevice);
+      logDebug("Selected device object", selectedDevice);
     }
   });
 
@@ -215,7 +175,10 @@ io.on("connection", (socket) => {
             const metaReq = xml2js.parseString(
               metadata,
               (err, metadataJson) => {
-                if (err) { logDebug("TrackMetaData parse error", err.message); return; }
+                if (err) {
+                  logDebug("TrackMetaData parse error", err.message);
+                  return;
+                }
                 /* PlayMedium : SONGLIST-NETWORK / RADIO-NETWORK / STATION-NETWORK / UNKOWN
                  *
                  * TrackSource : Prime / Qobuz / SPOTIFY / newTuneIn / iHeartRadio / Deezer / UPnPServer
@@ -270,7 +233,9 @@ io.on("connection", (socket) => {
       if (actions === "Play") options.Speed = 1;
 
       upnpClient.callAction("AVTransport", actions, options, (err, result) => {
-  if (err) { logDebug("Action error", actions, err.message); }
+        if (err) {
+          logDebug("Action error", actions, err.message);
+        }
       });
     }
   });
