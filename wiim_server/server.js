@@ -34,7 +34,8 @@ let xml = "";
 let devices = {};
 let devicesByLocation = [];
 let selectedDevice = undefined;
-var upnpClient = undefined;
+// Instance of UPNP device client for the currently selected device
+var mediaRendererClient = undefined;
 let serverStartTime = Date.now();
 
 // ==================== Health Check Endpoint ====================
@@ -59,48 +60,79 @@ app.get("/health", (req, res) => {
 });
 
 // ==================== pulling upnp devices ====================
-const upnpClient = require("upnp-client");
-let upnpDiscovery = upnpClient();
-upnpDiscovery.on("device", (device) => {
-  logDebug(
-    "UPnP device discovered:",
-    device.friendlyName,
-    device.UDN,
-    device.location
-  );
-  // Only add MediaRenderer devices
-  if (
-    device.deviceType &&
-    device.deviceType.indexOf("urn:schemas-upnp-org:device:MediaRenderer") >= 0
-  ) {
-    const deviceInfo = {
-      location: device.location,
-      manufacturer: device.manufacturer || "",
-    };
-    const extendedInfo = {
-      deviceType: device.deviceType || "",
-      friendlyName: device.friendlyName || "",
-      ssidName: device.ssidName || "",
-      uuid: device.UDN ? device.UDN.replace("uuid:", "") : device.uuid || "",
-    };
-    if (extendedInfo.uuid) {
-      devices[extendedInfo.uuid] = { ...extendedInfo, ...deviceInfo };
-      if (!devicesByLocation.find((d) => d.location === deviceInfo.location)) {
-        devicesByLocation.push(deviceInfo);
-      }
-      logDebug(
-        "Discovered MediaRenderer (upnp-client):",
-        extendedInfo.friendlyName,
-        extendedInfo.uuid,
-        "manufacturer=",
-        deviceInfo.manufacturer
-      );
-    } else {
-      logDebug("Device missing uuid, skipping (upnp-client)");
-    }
+// ==================== SSDP Discovery (node-ssdp) ====================
+const { Client: SSDPClient } = require("node-ssdp");
+const ssdpClient = new SSDPClient();
+
+function fetchAndRegisterDevice(location) {
+  // Avoid re-fetching same location
+  if (devicesByLocation.find((d) => d.location === location)) {
+    return;
+  }
+  const protocol = location.startsWith("https") ? https : http;
+  logDebug("Fetching device description", location);
+  protocol
+    .get(location, (resp) => {
+      let data = "";
+      resp.on("data", (chunk) => (data += chunk));
+      resp.on("end", () => {
+        xml2js.parseString(data, (err, result) => {
+          if (err || !result || !result.root || !result.root.device) {
+            logDebug("Failed to parse device XML", location, err && err.message);
+            return;
+          }
+            const device = result.root.device[0];
+            const deviceType = device.deviceType && device.deviceType[0];
+            if (
+              !deviceType ||
+              deviceType.indexOf("urn:schemas-upnp-org:device:MediaRenderer") < 0
+            ) {
+              return;
+            }
+            const udnRaw = device.UDN ? device.UDN[0] : "";
+            const uuid = udnRaw.replace("uuid:", "");
+            if (!uuid) return;
+            const friendlyName = device.friendlyName ? device.friendlyName[0] : "";
+            const manufacturer = device.manufacturer ? device.manufacturer[0] : "";
+            const deviceInfo = { location, manufacturer };
+            const extendedInfo = {
+              deviceType,
+              friendlyName,
+              ssidName: "", // not available via generic SSDP fetch
+              uuid,
+            };
+            devices[uuid] = { ...extendedInfo, ...deviceInfo };
+            devicesByLocation.push(deviceInfo);
+            logDebug(
+              "Discovered MediaRenderer (SSDP):",
+              friendlyName,
+              uuid,
+              "manufacturer=",
+              manufacturer
+            );
+      });
+    });
+    })
+    .on("error", (e) => logDebug("Device fetch error", location, e.message));
+}
+
+ssdpClient.on("response", (headers /*, statusCode, rinfo */) => {
+  const location = headers.LOCATION || headers.Location;
+  if (location) {
+    fetchAndRegisterDevice(location);
   }
 });
-upnpDiscovery.search();
+
+// Periodic search for MediaRenderer devices
+function performSearch() {
+  try {
+    ssdpClient.search("urn:schemas-upnp-org:device:MediaRenderer:1");
+  } catch (e) {
+    logDebug("SSDP search error", e.message);
+  }
+}
+performSearch();
+setInterval(performSearch, 10000);
 
 // ==================== hosting UI ====================
 app.use(express.static(__dirname + "/public"));
@@ -139,7 +171,7 @@ io.on("connection", (socket) => {
 
   socket.on("init", (location) => {
     if (location !== "") {
-      upnpClient = new UPNP(location);
+      mediaRendererClient = new UPNP(location);
       selectedDevice = devicesByLocation.filter(
         (dev) => dev.location === location
       )[0];
@@ -158,8 +190,8 @@ io.on("connection", (socket) => {
 
   socket.on("metadata", () => {
     let mergeData = {};
-    if (upnpClient) {
-      upnpClient.callAction(
+    if (mediaRendererClient) {
+      mediaRendererClient.callAction(
         "AVTransport",
         selectedDevice.manufacturer.indexOf("Linkplay") >= 0
           ? "GetInfoEx"
@@ -214,9 +246,9 @@ io.on("connection", (socket) => {
   });
 
   socket.on("actions", (actions) => {
-    if (upnpClient) {
+    if (mediaRendererClient) {
       if (actions === "status") {
-        upnpClient.callAction(
+        mediaRendererClient.callAction(
           "AVTransport",
           "GetTransportInfo",
           { InstanceID: 0 },
@@ -232,7 +264,7 @@ io.on("connection", (socket) => {
 
       if (actions === "Play") options.Speed = 1;
 
-      upnpClient.callAction("AVTransport", actions, options, (err, result) => {
+      mediaRendererClient.callAction("AVTransport", actions, options, (err, result) => {
         if (err) {
           logDebug("Action error", actions, err.message);
         }
@@ -284,10 +316,26 @@ io.on("connection", (socket) => {
   // });
 });
 
-webServer.listen(8080, () => {
-  console.log(
-    "Web Server started at http://localhost:%s%s",
-    webServer.address().address,
-    webServer.address().port
-  );
-});
+function startServer(port = 8080, maxAttempts = 5) {
+  webServer.listen(port, () => {
+    const addr = webServer.address();
+    console.log(
+      "Web Server started at http://localhost:%s%s",
+      addr && addr.address !== '::' ? addr.address : 'localhost',
+      addr && addr.port
+    );
+  });
+  webServer.on('error', (err) => {
+    if (err.code === 'EADDRINUSE' && maxAttempts > 0) {
+      console.log(`Port ${port} in use, retrying on ${port + 1}...`);
+      setTimeout(() => {
+        startServer(port + 1, maxAttempts - 1);
+      }, 250);
+    } else {
+      console.error('Server failed to start', err);
+      process.exit(1);
+    }
+  });
+}
+
+startServer();
