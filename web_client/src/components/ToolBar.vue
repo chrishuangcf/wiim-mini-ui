@@ -60,6 +60,8 @@ export default {
     handleShowDevices() {
       this.toggleDevices = !this.toggleDevices;
       this.$emit("showDevices", this.toggleDevices);
+      // Always refresh devices when toggling the device list
+      this.$emit("refreshDevices");
     },
     handleToggleSetup() {
       this.toggleServerUrl = !this.toggleServerUrl;

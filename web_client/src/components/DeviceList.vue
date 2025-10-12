@@ -20,27 +20,9 @@
           {{ device.friendlyName }}
         </v-btn>
       </v-btn-toggle>
-      <v-btn
-        color="#00BFAE"
-        variant="flat"
-        rounded="sm"
-        style="margin-left: 1em"
-        @click="refreshDevices"
-      >
-        Refresh
-      </v-btn>
     </div>
     <div v-else class="d-flex align-center" style="margin-top: 1em">
-      <span>No devices found.</span>
-      <v-btn
-        color="#00BFAE"
-        variant="flat"
-        rounded="sm"
-        style="margin-left: 1em"
-        @click="refreshDevices"
-      >
-        Refresh
-      </v-btn>
+      <span>No devices found. Click the speaker icon to refresh.</span>
     </div>
   </div>
 </template>

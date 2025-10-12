@@ -70,6 +70,7 @@ import CoverArt from "@/assets/cover.jpg";
                     @player="postActions"
                     @showServerUrl="toggleServerUrl"
                     @showDevices="toggleDeviceList"
+                    @refreshDevices="refreshDeviceList"
                     color="#424242"
                   />
                 </div>
@@ -85,7 +86,7 @@ import CoverArt from "@/assets/cover.jpg";
     <v-row v-if="toggles.devices">
       <v-col cols="12">
         <v-card color="#263238" theme="dark">
-          <DeviceList :deviceList="deviceList" @location="postInit" />
+          <DeviceList ref="deviceListComponent" :deviceList="deviceList" @location="postInit" />
         </v-card>
       </v-col>
     </v-row>
@@ -236,6 +237,13 @@ export default {
     toggleDeviceList: function (showDevices: boolean) {
       this.fetchDeviceList();
       this.toggles.devices = showDevices;
+    },
+    refreshDeviceList: function () {
+      // Call the refreshDevices method in the DeviceList component
+      const deviceListComp = this.$refs.deviceListComponent as any;
+      if (deviceListComp && deviceListComp.refreshDevices) {
+        deviceListComp.refreshDevices();
+      }
     },
     toggleServerUrl: function (showServerUrl: boolean) {
       this.toggles.serverUrl = showServerUrl;

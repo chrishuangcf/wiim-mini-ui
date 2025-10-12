@@ -890,6 +890,10 @@ The server location should host both the **wiim_server** and web app from the sa
 
 ## Change Logs
 
+- 10/11/25
+  - Fixed a bug that caused the app to crash when switching between different media renderers while music was playing.
+  - Switched from legacy Node-ssdp library to a native dgram UDP socket implementation for SSDP discovery. This change improves reliability and compatibility across different operating systems, especially on macOS and Windows where multicast handling in containers can be problematic.
+
 - 8/3/22
 
   - Added track length, current playback time, shuffle mode, repeat mode, and volume on the cover art.
