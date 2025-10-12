@@ -21,7 +21,7 @@ RUN npm config set strict-ssl false && \
 COPY server.js ./
 
 # Expose ports
-EXPOSE 8080
+EXPOSE 8081
 EXPOSE 8200/tcp
 EXPOSE 1900/udp
 

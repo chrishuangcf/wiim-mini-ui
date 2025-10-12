@@ -275,7 +275,7 @@ const trackSource = (spotify, trackSource) => {
   }
 
   // BubbleUPnP clients
-  if (selectedDevice.manufacturer.indexOf("Bubblesoft") >= 0) {
+  if (selectedDevice && selectedDevice.manufacturer.indexOf("Bubblesoft") >= 0) {
     return "upnpserver";
   }
 
@@ -313,7 +313,7 @@ io.on("connection", (socket) => {
 
   socket.on("metadata", () => {
     let mergeData = {};
-    if (mediaRendererClient) {
+    if (mediaRendererClient && selectedDevice) {
       mediaRendererClient.callAction(
         "AVTransport",
         selectedDevice.manufacturer.indexOf("Linkplay") >= 0
@@ -376,7 +376,10 @@ io.on("connection", (socket) => {
           "GetTransportInfo",
           { InstanceID: 0 },
           (err, result) => {
-            if (err) throw err;
+            if (err) {
+              logDebug("GetTransportInfo error", err.message);
+              return;
+            }
             socket.emit("actions", result.CurrentTransportState);
           }
         );
@@ -439,7 +442,7 @@ io.on("connection", (socket) => {
   // });
 });
 
-function startServer(port = 8080, maxAttempts = 5) {
+function startServer(port = 8081, maxAttempts = 5) {
   webServer.listen(port, () => {
     const addr = webServer.address();
     console.log(
