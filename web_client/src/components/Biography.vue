@@ -14,7 +14,7 @@
           height="25"
           variant="outlined"
           color="#78909C"
-          :href="`http://duckduckgo.com/?q=%5Csite:last.fm ${this.urlDecode(
+          :href="`http://duckduckgo.com/?q=%5Csite:last.fm ${urlDecode(
             artist
           )}/+wiki`"
           target="_blink"
@@ -25,7 +25,7 @@
           height="25"
           variant="outlined"
           color="#78909C"
-          :href="`http://duckduckgo.com/?q=%5Csite:wikiwand.com ${this.urlDecode(
+          :href="`http://duckduckgo.com/?q=%5Csite:wikiwand.com ${urlDecode(
             artist
           )}`"
           target="_blink"
@@ -36,7 +36,7 @@
           height="25"
           variant="outlined"
           color="#78909C"
-          :href="`http://duckduckgo.com/?q=%5Csite:allmusic.com ${this.urlDecode(
+          :href="`http://duckduckgo.com/?q=%5Csite:allmusic.com ${urlDecode(
             artist
           )}`"
           target="_blink"

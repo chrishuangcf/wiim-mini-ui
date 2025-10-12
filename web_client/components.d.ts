@@ -10,7 +10,6 @@ declare module 'vue' {
     AlbumArt: typeof import('./src/components/AlbumArt.vue')['default']
     Biography: typeof import('./src/components/Biography.vue')['default']
     DeviceList: typeof import('./src/components/DeviceList.vue')['default']
-    HelloWorld: typeof import('./src/components/HelloWorld.vue')['default']
     IconCommunity: typeof import('./src/components/icons/IconCommunity.vue')['default']
     IconDocumentation: typeof import('./src/components/icons/IconDocumentation.vue')['default']
     IconEcosystem: typeof import('./src/components/icons/IconEcosystem.vue')['default']

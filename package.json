@@ -6,9 +6,11 @@
     "main": "server.js",
     "scripts": {
         "init": "cd web_client && sudo npm install && cd .. && cd wiim_server && sudo npm install && cd ..",
+        "ui:dev": "cd web_client && npm run dev",
+        "server:dev": "cd wiim_server && npm run serve",
         "build": "cd web_client && npm run build",
-        "serve": "rm -rf ./wiim_server/public && cp -R ./web_client/dist ./wiim_server/public && yarn server serve",
-        "serve:ui": "yarn build && yarn serve"
+        "serve": "rm -rf ./wiim_server/public && cp -R ./web_client/dist ./wiim_server/public && cd wiim_server && npm run serve",
+        "serve:ui": "npm run build && npm run serve"
     },
     "repository": "git+https://github.com/chrishuangcf/wiim-mini-ui.git",
     "author": "Chris Huang",

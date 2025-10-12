@@ -1,0 +1,81 @@
+# Docker Compose configuration for WiiM Mini UI
+# 
+# SSL Certificate Support:
+# Both frontend and backend containers are configured to handle SSL certificates
+# for corporate/enterprise environments that use custom Certificate Authorities.
+# 
+# The containers mount the ~/.ssh directory (read-only) which can contain:
+# - Custom CA certificates
+# - SSL certificates for HTTPS connections
+# - Any other certificate files needed for secure communications
+#
+# Environment variables set for SSL:
+# - NODE_EXTRA_CA_CERTS: Additional CA certificates for Node.js
+# - SSL_CERT_FILE: SSL certificate file location
+# - NPM_CONFIG_CAFILE: CA file for npm operations
+# - NODE_TLS_REJECT_UNAUTHORIZED: Set to "0" to allow self-signed certificates
+#
+# To use specific certificates, uncomment and modify the volume mounts below.
+
+services:
+  # Frontend - Vue.js application served by nginx
+  frontend:
+    build:
+      context: ./web_client
+      dockerfile: Dockerfile
+      args:
+        NODE_TLS_REJECT_UNAUTHORIZED: "0"
+    container_name: wiim-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - wiim-network
+    restart: unless-stopped
+    environment:
+      NODE_ENV: "production"
+      NODE_EXTRA_CA_CERTS: /usr/local/share/ca-certificates/custom-ca.crt
+      SSL_CERT_FILE: /usr/local/share/ca-certificates/custom-ca.crt
+      NPM_CONFIG_CAFILE: /usr/local/share/ca-certificates/custom-ca.crt
+      NODE_TLS_REJECT_UNAUTHORIZED: "0"
+    volumes:
+      # Mount SSL certificates from ~/.ssh folder
+      - ~/.ssh:/root/.ssh:ro
+      # If you have specific cert files, mount them directly:
+      # - ~/.ssh/your-cert.crt:/usr/local/share/ca-certificates/custom-ca.crt:ro
+      # - ~/.ssh/your-cert.pem:/usr/local/share/ca-certificates/custom-ca.crt:ro
+
+  # Backend - Node.js server
+  backend:
+    build:
+      context: ./wiim_server
+      dockerfile: dockerfile.latest
+      args:
+        NODE_TLS_REJECT_UNAUTHORIZED: "0"
+    container_name: wiim-backend
+    ports:
+      - "8080:8080"
+      - "8200:8200/tcp"
+      - "1900:1900/udp"
+    networks:
+      - wiim-network
+    restart: unless-stopped
+    environment:
+      NODE_ENV: "production"
+      NODE_EXTRA_CA_CERTS: /usr/local/share/ca-certificates/custom-ca.crt
+      SSL_CERT_FILE: /usr/local/share/ca-certificates/custom-ca.crt
+      NPM_CONFIG_CAFILE: /usr/local/share/ca-certificates/custom-ca.crt
+      NODE_TLS_REJECT_UNAUTHORIZED: "0"
+    volumes:
+      # Mount SSL certificates from ~/.ssh folder
+      - ~/.ssh:/root/.ssh:ro
+      # If you have specific cert files, mount them directly:
+      # - ~/.ssh/your-cert.crt:/usr/local/share/ca-certificates/custom-ca.crt:ro
+      # - ~/.ssh/your-cert.pem:/usr/local/share/ca-certificates/custom-ca.crt:ro
+      # Uncomment below to mount server.js for development
+      # - ./wiim_server/server.js:/app/server.js
+
+networks:
+  wiim-network:
+    driver: bridge

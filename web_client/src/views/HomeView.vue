@@ -149,7 +149,7 @@ export default {
         ssidName: '',
         uuid: ''
       }],
-      timer: {},
+      timer: undefined as number | undefined,
     };
   },
   components: {
@@ -162,7 +162,7 @@ export default {
   },
   created() {
     this.fetchDeviceList();
-    this.timer = setInterval(this.fetchRefreshData, 1000);
+    this.timer = setInterval(this.fetchRefreshData, 1000) as unknown as number;
   },
   mounted: () => {},
   watch: {

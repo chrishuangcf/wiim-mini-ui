@@ -32,7 +32,7 @@ class="d-flex mb-2"
     mounted: function () {},
     watch: {},
     methods: {
-      handleSelectPlayer(location) {
+      handleSelectPlayer(location: string) {
         this.$emit("location", location);
       },
     },

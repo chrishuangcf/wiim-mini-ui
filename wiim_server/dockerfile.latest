@@ -1,11 +1,29 @@
-FROM node
+FROM node:20-alpine
 WORKDIR /app
-ADD public /app/public
-COPY package.json /app/
-COPY server.js  /app/
 
-RUN npm install
+# Set SSL environment variables for build stage
+ARG NODE_TLS_REJECT_UNAUTHORIZED=0
+ENV NODE_TLS_REJECT_UNAUTHORIZED=${NODE_TLS_REJECT_UNAUTHORIZED}
+
+# Use HTTP repositories for Alpine to avoid SSL issues
+RUN sed -i 's/https/http/g' /etc/apk/repositories && \
+    apk update && \
+    apk add --no-cache ca-certificates
+
+# Copy package files
+COPY package.json package-lock.json* ./
+
+# Install ALL dependencies (including devDependencies) since express is needed
+RUN npm config set strict-ssl false && \
+    (npm ci --legacy-peer-deps || npm install --legacy-peer-deps)
+
+# Copy server code
+COPY server.js ./
+
+# Expose ports
 EXPOSE 8080
 EXPOSE 8200/tcp
 EXPOSE 1900/udp
-CMD [ "node", "server.js" ]pwd
+
+# Start the server
+CMD ["node", "server.js"]

@@ -9,7 +9,7 @@
         "docker:run": "docker run -d --rm --name wiim_service -p 127.0.0.1:8080:8080 wiim_ui"
     },
     "dependencies": {
-        "node-ssdp": "^4.0.1",
+        "node-ssdp": "^1.0.0",
         "socket.io": "^4.5.1"
     },
     "devDependencies": {
