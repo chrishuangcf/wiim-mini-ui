@@ -284,15 +284,15 @@ As a developer, you might want to run both back-end and front-end service separa
 
 ### Developer Mode
 
-By running `yarn ui dev` will host a hot-swap version of web server to run the front-end code on **localhost:3000**. Meanwhile, running `yarn server serve` will kick in back-end server on **localhost:8080**.
+By running `npm run ui:dev` will host a hot-swap version of web server to run the front-end code on **localhost:5173**. Meanwhile, running `npm run server:dev` will kick in back-end server on **localhost:8080**.
 
 ### Production Mode
 
 If you wish just to build and run, You only need the following commands :
 
 ```
-yarn ui build
-yarn serve
+npm run build
+npm run serve
 ```
 
 These commands will first build the web app into a bundled, minified package. Then the script will copy the productionalized web app into the right place and start the back-end services and host it under the node.js as a static page. In this mode, you really only need to hit **http://localhost:8080** to run the web app.
@@ -309,9 +309,9 @@ These commands will first build the web app into a bundled, minified package. Th
 
 **For manual deployment** on a Raspberry Pi or other systems:
 
-If you wish to run this web app anywhere else, such as a mini Single Board Computer like a Raspberry Pi. All you have to do is to run the `yarn ui build` command first. After the building process has finished, you just have to copy **/web_client/dist** directory into a directory where you wish to run the service. For example! If your Node.js is running at **/helloWorld** folder, then you need to copy **/web_client/dist** into **/HelloWorld/public**. After that, just copy **/wiim_server** into **/HelloWorld** directory and run with **node server.js** (after you properly installed by running `npm install`).
+If you wish to run this web app anywhere else, such as a mini Single Board Computer like a Raspberry Pi. All you have to do is to run the `npm run build` command first. After the building process has finished, you just have to copy **/web_client/dist** directory into a directory where you wish to run the service. For example! If your Node.js is running at **/helloWorld** folder, then you need to copy **/web_client/dist** into **/HelloWorld/public**. After that, just copy **/wiim_server** into **/HelloWorld** directory and run with **node server.js** (after you properly installed by running `npm install`).
 
-1. make a build by running ``yarn ui build`.
+1. make a build by running `npm run build`.
 2. copy **/web_client/dist** directory into **<destination>/public** directory.
 3. copy **/wiim_server/server.js** into **<destination>/** directory.
 4. run `node server.js` to start both back-end server and front-end web app.
@@ -327,7 +327,7 @@ If you wish to run this web app anywhere else, such as a mini Single Board Compu
 7. sudo apt-get install -y nodejs (Install Node.js)
 8. node -v (check if node.js is properly installed)
 
-9. At your current computer, kick in a build by `yarn ui build`
+9. At your current computer, kick in a build by `npm run build`
 10. Copy **/web_client/dist** into Raspberry Pi to where you want your code to be hosted **<destination>/public**
 11. Copy **server.js** and **package.json** files in **/wiim_server/** into your **<destination>** folder on the Raspberry Pi.
 12. Run `npm install` to install dependencies.
