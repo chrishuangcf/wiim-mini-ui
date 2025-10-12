@@ -49,33 +49,72 @@
 import { io, Socket } from "socket.io-client";
 export default {
   name: "DeviceList",
+  props: {
+    // Allow parent to pass a pre-created socket (optional)
+    socketInstance: { type: Object, required: false },
+  },
   data() {
     return {
       deviceList: [] as any[],
       socket: null as Socket | null,
       socketError: false,
+      backendUrl: (import.meta as any).env?.VITE_BACKEND_URL || "",
+      triedFallback: false,
     };
   },
   mounted() {
-    try {
-      this.socket = io("http://localhost:8080");
-      this.socket.on("devices", (devices: any[]) => {
-        this.deviceList = devices;
-      });
-      this.socket.on("connect_error", () => {
-        this.socketError = true;
-      });
-      this.socket.emit("devices");
-    } catch (e) {
-      this.socketError = true;
-    }
+    this.initSocket();
   },
   beforeUnmount() {
-    if (this.socket) {
+    if (this.socket && !this.socketInstance) {
+      // Only disconnect if we created it locally
       this.socket.disconnect();
     }
   },
   methods: {
+    initSocket() {
+      if (this.socketInstance) {
+        this.socket = this.socketInstance as Socket;
+        this.attachListeners();
+        this.socket.emit("devices");
+        return;
+      }
+      try {
+        const base = this.backendUrl || window.location.origin;
+        this.socket = io(base, { transports: ["websocket", "polling"] });
+        this.socket.on("connect_error", () => {
+          if (!this.triedFallback && !this.backendUrl) {
+            this.triedFallback = true;
+            const fallback = `${window.location.protocol}//${window.location.hostname}:8080`;
+            this.socket?.disconnect();
+            this.socket = io(fallback, { transports: ["websocket", "polling"] });
+            this.attachListeners();
+            this.socket.emit("devices");
+          } else {
+            this.socketError = true;
+          }
+        });
+        this.attachListeners();
+        this.socket.emit("devices");
+      } catch (e) {
+        this.socketError = true;
+      }
+    },
+    attachListeners() {
+      if (!this.socket) return;
+      this.socket.on("devices", (devices: any[]) => {
+        this.deviceList = devices;
+      });
+      // Real-time incremental updates
+      this.socket.on("device:discovered", (device: any) => {
+        if (!this.deviceList.find((d) => d.uuid === device.uuid || d.location === device.location)) {
+          this.deviceList.push(device);
+        }
+      });
+      this.socket.on("device:removed", (uuid: string) => {
+        this.deviceList = this.deviceList.filter((d) => d.uuid !== uuid);
+      });
+    },
     handleSelectPlayer(location: string) {
       this.$emit("location", location);
     },
