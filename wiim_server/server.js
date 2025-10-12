@@ -60,33 +60,92 @@ app.get("/health", (req, res) => {
 });
 
 // ==================== pulling upnp devices ====================
-// ==================== SSDP Discovery (node-ssdp) ====================
-const { Client: SSDPClient } = require("node-ssdp");
-// Bind to all interfaces; if issues arise you can specify { explicitSocketBind: true }
-const ssdpInterfaces = (process.env.SSDP_INTERFACES || "")
-  .split(",")
-  .map((s) => s.trim())
-  .filter(Boolean);
-const ssdpClient = new SSDPClient({
-  reuseAddr: true,
-  explicitSocketBind:
-    process.env.SSDP_EXPLICIT_BIND === "1" ||
-    process.env.SSDP_EXPLICIT_BIND === "true" ||
-    false,
-  interfaces: ssdpInterfaces.length ? ssdpInterfaces : undefined,
+// ==================== SSDP Discovery (native dgram) ====================
+const dgram = require("dgram");
+const SSDP_ADDR = "239.255.255.250";
+const SSDP_PORT = 1900;
+
+const ssdpSocket = dgram.createSocket({ type: "udp4", reuseAddr: true });
+
+logDebug("SSDP dgram socket initializing");
+
+ssdpSocket.on("error", (err) => {
+  logDebug("SSDP socket error", err.message);
 });
-try {
-  const internalOpts = (ssdpClient && (ssdpClient.options || ssdpClient._opts)) || {};
-  logDebug(
-    "SSDP client init",
-    JSON.stringify({
-      explicitSocketBind: internalOpts.explicitSocketBind,
-      interfaces: ssdpInterfaces,
-    })
-  );
-} catch (e) {
-  logDebug("SSDP client init (options unavailable)", e.message);
+
+ssdpSocket.on("listening", () => {
+  const addr = ssdpSocket.address();
+  logDebug(`SSDP socket listening on ${addr.address}:${addr.port}`);
+  try {
+    ssdpSocket.addMembership(SSDP_ADDR);
+    ssdpSocket.setMulticastTTL(4);
+    logDebug(`Joined multicast group ${SSDP_ADDR}`);
+  } catch (e) {
+    logDebug("Multicast membership error", e.message);
+  }
+});
+
+function parseSSDPHeaders(msg) {
+  const lines = msg.toString().split("\r\n");
+  const headers = {};
+  lines.forEach((line) => {
+    const colonIdx = line.indexOf(":");
+    if (colonIdx > 0) {
+      const key = line.substring(0, colonIdx).trim().toLowerCase();
+      const value = line.substring(colonIdx + 1).trim();
+      headers[key] = value;
+    }
+  });
+  return headers;
 }
+
+ssdpSocket.on("message", (msg, rinfo) => {
+  const msgStr = msg.toString();
+  const headers = parseSSDPHeaders(msgStr);
+  
+  if (msgStr.startsWith("HTTP/1.1 200 OK")) {
+    // M-SEARCH response
+    discoveryStats.responses++;
+    discoveryStats.lastResponseAt = new Date().toISOString();
+    const location = headers.location;
+    if (location) {
+      logDebug(
+        "SSDP response",
+        JSON.stringify({
+          from: rinfo.address,
+          st: headers.st,
+          usn: headers.usn,
+          location,
+        })
+      );
+      fetchAndRegisterDevice(location);
+    } else {
+      logDebug("SSDP response missing location", rinfo.address);
+    }
+  } else if (msgStr.startsWith("NOTIFY")) {
+    // Device advertisement
+    const nts = headers.nts;
+    const location = headers.location;
+    const usn = headers.usn;
+    
+    if (nts === "ssdp:alive" && location) {
+      logDebug("NOTIFY alive", location);
+      fetchAndRegisterDevice(location);
+    } else if (nts === "ssdp:byebye" && usn) {
+      const uuid = usn.replace(/uuid:([^:]+).*/, "$1");
+      if (devices[uuid]) {
+        const loc = devices[uuid].location;
+        logDebug("Device bye", uuid, loc);
+        delete devices[uuid];
+        devicesByLocation = devicesByLocation.filter((d) => d.location !== loc);
+        discoveryStats.devices = Object.keys(devices).length;
+        io.emit("device:removed", uuid);
+      }
+    }
+  }
+});
+
+ssdpSocket.bind(SSDP_PORT);
 
 let discoveryStats = {
   searches: 0,
@@ -150,55 +209,6 @@ function fetchAndRegisterDevice(location) {
     .on("error", (e) => logDebug("Device fetch error", location, e.message));
 }
 
-ssdpClient.on("response", (headers, statusCode, rinfo) => {
-  discoveryStats.responses++;
-  discoveryStats.lastResponseAt = new Date().toISOString();
-  // Normalize header keys (node-ssdp may lower-case them)
-  const normalized = {};
-  Object.keys(headers || {}).forEach((k) => {
-    normalized[k.toLowerCase()] = headers[k];
-  });
-  const location =
-    normalized["location"] || headers.LOCATION || headers.Location;
-  if (location) {
-    logDebug(
-      "SSDP response",
-      JSON.stringify({
-        from: rinfo && rinfo.address,
-        st: normalized["st"],
-        usn: normalized["usn"],
-        location,
-      })
-    );
-    fetchAndRegisterDevice(location);
-  } else {
-    logDebug("SSDP response missing location header", headers);
-  }
-});
-
-// Some devices send NOTIFY with LOCATION; capture those too
-ssdpClient.on("advertise-alive", (headers) => {
-  const location =
-    headers.LOCATION || headers.Location || headers.location || headers.Location;
-  if (location) {
-    logDebug("NOTIFY alive", location);
-    fetchAndRegisterDevice(location);
-  }
-});
-ssdpClient.on("advertise-bye", (headers) => {
-  const udn = headers.USN || headers.usn;
-  if (!udn) return;
-  const uuid = udn.replace(/uuid:([^:]+).*/, "$1");
-  if (devices[uuid]) {
-    const location = devices[uuid].location;
-    logDebug("Device bye", uuid, location);
-    delete devices[uuid];
-    devicesByLocation = devicesByLocation.filter((d) => d.location !== location);
-    discoveryStats.devices = Object.keys(devices).length;
-    io.emit("device:removed", uuid);
-  }
-});
-
 // Periodic search for MediaRenderer devices
 const SEARCH_TARGETS = [
   "urn:schemas-upnp-org:device:MediaRenderer:1",
@@ -212,15 +222,29 @@ function performSearch() {
   discoveryStats.searches++;
   discoveryStats.lastSearchAt = new Date().toISOString();
   SEARCH_TARGETS.forEach((st) => {
-    try {
-  ssdpClient.search(st);
-  logDebug("Sent SSDP M-SEARCH", st, "(#" + discoveryStats.searches + ")");
-    } catch (e) {
-      logDebug("SSDP search error", st, e.message);
-    }
+    const msearch = [
+      "M-SEARCH * HTTP/1.1",
+      `HOST: ${SSDP_ADDR}:${SSDP_PORT}`,
+      'MAN: "ssdp:discover"',
+      "MX: 3",
+      `ST: ${st}`,
+      "",
+      "",
+    ].join("\r\n");
+    
+    const msg = Buffer.from(msearch);
+    ssdpSocket.send(msg, 0, msg.length, SSDP_PORT, SSDP_ADDR, (err) => {
+      if (err) {
+        logDebug("M-SEARCH send error", st, err.message);
+      } else {
+        logDebug("Sent SSDP M-SEARCH", st, "(#" + discoveryStats.searches + ")");
+      }
+    });
   });
 }
-performSearch();
+
+// Start searching after socket binds
+setTimeout(performSearch, 1000);
 setInterval(performSearch, 15000); // every 15s to reduce chatter
 
 app.get("/discovery-debug", (req, res) => {
@@ -283,6 +307,7 @@ io.on("connection", (socket) => {
     for (const key in devices) {
       result.push(devices[key]);
     }
+    logDebug("Emitting devices to client", JSON.stringify({ count: result.length, devices: result }));
     socket.emit("devices", result);
   });
 
