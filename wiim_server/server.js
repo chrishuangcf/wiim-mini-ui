@@ -62,7 +62,19 @@ app.get("/health", (req, res) => {
 // ==================== pulling upnp devices ====================
 // ==================== SSDP Discovery (node-ssdp) ====================
 const { Client: SSDPClient } = require("node-ssdp");
-const ssdpClient = new SSDPClient();
+// Bind to all interfaces; if issues arise you can specify { explicitSocketBind: true }
+const ssdpClient = new SSDPClient({
+  reuseAddr: true,
+  explicitSocketBind: false,
+});
+
+let discoveryStats = {
+  searches: 0,
+  lastSearchAt: null,
+  responses: 0,
+  lastResponseAt: null,
+  devices: 0,
+};
 
 function fetchAndRegisterDevice(location) {
   // Avoid re-fetching same location
@@ -103,6 +115,7 @@ function fetchAndRegisterDevice(location) {
             };
             devices[uuid] = { ...extendedInfo, ...deviceInfo };
             devicesByLocation.push(deviceInfo);
+            discoveryStats.devices = Object.keys(devices).length;
             logDebug(
               "Discovered MediaRenderer (SSDP):",
               friendlyName,
@@ -110,29 +123,76 @@ function fetchAndRegisterDevice(location) {
               "manufacturer=",
               manufacturer
             );
+            io.emit("device:discovered", devices[uuid]);
       });
     });
     })
     .on("error", (e) => logDebug("Device fetch error", location, e.message));
 }
 
-ssdpClient.on("response", (headers /*, statusCode, rinfo */) => {
+ssdpClient.on("response", (headers, statusCode, rinfo) => {
+  discoveryStats.responses++;
+  discoveryStats.lastResponseAt = new Date().toISOString();
   const location = headers.LOCATION || headers.Location;
   if (location) {
+    logDebug("SSDP response from", rinfo && rinfo.address, "location=", location);
     fetchAndRegisterDevice(location);
+  } else {
+    logDebug("SSDP response missing LOCATION header", headers);
+  }
+});
+
+// Some devices send NOTIFY with LOCATION; capture those too
+ssdpClient.on("advertise-alive", (headers) => {
+  const location = headers.LOCATION || headers.Location;
+  if (location) {
+    logDebug("NOTIFY alive location=", location);
+    fetchAndRegisterDevice(location);
+  }
+});
+ssdpClient.on("advertise-bye", (headers) => {
+  const udn = headers.USN || headers.usn;
+  if (!udn) return;
+  const uuid = udn.replace(/uuid:([^:]+).*/, "$1");
+  if (devices[uuid]) {
+    logDebug("Device bye", uuid);
+    delete devices[uuid];
+    devicesByLocation = devicesByLocation.filter((d) => d.location !== devices[uuid]?.location);
+    discoveryStats.devices = Object.keys(devices).length;
+    io.emit("device:removed", uuid);
   }
 });
 
 // Periodic search for MediaRenderer devices
+const SEARCH_TARGETS = [
+  "urn:schemas-upnp-org:device:MediaRenderer:1",
+  "urn:schemas-upnp-org:service:AVTransport:1",
+  "ssdp:all",
+];
+
 function performSearch() {
-  try {
-    ssdpClient.search("urn:schemas-upnp-org:device:MediaRenderer:1");
-  } catch (e) {
-    logDebug("SSDP search error", e.message);
-  }
+  discoveryStats.searches++;
+  discoveryStats.lastSearchAt = new Date().toISOString();
+  SEARCH_TARGETS.forEach((st) => {
+    try {
+      ssdpClient.search(st);
+      logDebug("Sent SSDP M-SEARCH", st);
+    } catch (e) {
+      logDebug("SSDP search error", st, e.message);
+    }
+  });
 }
 performSearch();
-setInterval(performSearch, 10000);
+setInterval(performSearch, 15000); // every 15s to reduce chatter
+
+app.get("/discovery-debug", (req, res) => {
+  res.json({
+    stats: discoveryStats,
+    devices: Object.values(devices),
+    locations: devicesByLocation,
+    targets: SEARCH_TARGETS,
+  });
+});
 
 // ==================== hosting UI ====================
 app.use(express.static(__dirname + "/public"));
