@@ -17,6 +17,16 @@ var io = require("socket.io")(webServer, {
   },
 });
 const ssdpClient = new SSDP();
+const os = require("os");
+
+// Verbose logging flag
+const UPNP_DEBUG = process.env.UPNP_DEBUG === "1" || process.env.UPNP_DEBUG === "true";
+
+function logDebug(...args) {
+  if (UPNP_DEBUG) {
+    console.log("[UPNP_DEBUG]", ...args);
+  }
+}
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
@@ -50,9 +60,36 @@ app.get("/health", (req, res) => {
 });
 
 // ==================== pulling upnp devices ====================
-ssdpClient.search("ssdp:all");
-ssdpClient.on("response", (resp) => {
-  if (resp.ST.indexOf("urn:schemas-upnp-org:device:MediaRenderer") >= 0) {
+if (UPNP_DEBUG) {
+  // Dump network interfaces to understand which NICs are available
+  const ifaces = os.networkInterfaces();
+  logDebug("Network interfaces:");
+  Object.keys(ifaces).forEach(name => {
+    ifaces[name].forEach(info => {
+      logDebug(`  ${name} -> address=${info.address} family=${info.family} internal=${info.internal} mac=${info.mac}`);
+    });
+  });
+  logDebug("Starting SSDP M-SEARCH for all devices (ssdp:all)");
+}
+
+// Perform repeated searches to improve discovery chances (some devices reply slowly)
+function performSearch(attempt = 1) {
+  logDebug(`Sending M-SEARCH attempt ${attempt}`);
+  try {
+    ssdpClient.search("ssdp:all");
+  } catch (e) {
+    logDebug("Error initiating search", e);
+  }
+  if (attempt < 5) {
+    setTimeout(() => performSearch(attempt + 1), 3000);
+  }
+}
+performSearch();
+
+ssdpClient.on("response", (resp, statusCode, rinfo) => {
+  logDebug("SSDP response from", rinfo && rinfo.address, "ST=", resp.ST, "USN=", resp.USN, "LOCATION=", resp.LOCATION);
+  if (resp.ST && resp.ST.indexOf("urn:schemas-upnp-org:device:MediaRenderer") >= 0) {
+    logDebug("MediaRenderer candidate -> fetching device XML", resp.LOCATION);
     const gsaReq = http
       .get(resp.LOCATION, function (response) {
         var completeResponse = "";
@@ -60,12 +97,12 @@ ssdpClient.on("response", (resp) => {
           completeResponse += chunk;
         });
         response.on("end", function () {
-          const metaReq = xml2js.parseString(
-            completeResponse,
-            (err, completeResponse) => {
-              if (err) {
-                throw err;
-              }
+          xml2js.parseString(completeResponse, (err, completeResponse) => {
+            if (err) {
+              logDebug("XML parse error", err.message);
+              return;
+            }
+            try {
               const temp = completeResponse.root.device[0];
               const deviceInfo = {
                 location: resp.LOCATION,
@@ -77,19 +114,32 @@ ssdpClient.on("response", (resp) => {
                 ssidName: temp.ssidName ? temp.ssidName[0] : "",
                 uuid: temp.uuid ? temp.uuid[0] : "",
               };
-              devices[temp.friendlyName[0]] = {
-                ...extendedInfo,
-                ...deviceInfo,
-              };
-              devicesByLocation.push(deviceInfo);
+              devices[temp.friendlyName[0]] = { ...extendedInfo, ...deviceInfo };
+              // Avoid duplicate locations
+              if (!devicesByLocation.find(d => d.location === deviceInfo.location)) {
+                devicesByLocation.push(deviceInfo);
+              }
+              logDebug("Discovered MediaRenderer:", extendedInfo.friendlyName, extendedInfo.uuid, "manufacturer=", deviceInfo.manufacturer);
+            } catch (e) {
+              logDebug("Device processing error", e.message);
             }
-          );
+          });
         });
       })
       .on("error", function (e) {
-        console.log("problem with request: " + e.message);
+        logDebug("HTTP fetch error", e.message);
       });
   }
+});
+
+ssdpClient.on("advertise-alive", (hdr) => {
+  logDebug("NOTIFY alive", hdr.NT, hdr.USN, hdr.LOCATION);
+});
+ssdpClient.on("advertise-bye", (hdr) => {
+  logDebug("NOTIFY byebye", hdr.USN);
+});
+ssdpClient.on("error", (err) => {
+  logDebug("SSDP client error", err.message);
 });
 
 // ==================== hosting UI ====================
@@ -134,6 +184,7 @@ io.on("connection", (socket) => {
         (dev) => dev.location === location
       )[0];
       console.log(`Device XML ${location} had been selected by a client`);
+  logDebug("Selected device object", selectedDevice);
     }
   });
 
@@ -155,15 +206,16 @@ io.on("connection", (socket) => {
           : "GetPositionInfo",
         { InstanceID: 0 },
         (err, result) => {
-          if (err) throw err;
+          if (err) {
+            logDebug("Metadata action error", err.message);
+            return;
+          }
           const metadata = result.TrackMetaData;
           if (metadata) {
             const metaReq = xml2js.parseString(
               metadata,
               (err, metadataJson) => {
-                if (err) {
-                  throw err;
-                }
+                if (err) { logDebug("TrackMetaData parse error", err.message); return; }
                 /* PlayMedium : SONGLIST-NETWORK / RADIO-NETWORK / STATION-NETWORK / UNKOWN
                  *
                  * TrackSource : Prime / Qobuz / SPOTIFY / newTuneIn / iHeartRadio / Deezer / UPnPServer
@@ -218,7 +270,7 @@ io.on("connection", (socket) => {
       if (actions === "Play") options.Speed = 1;
 
       upnpClient.callAction("AVTransport", actions, options, (err, result) => {
-        if (err) throw err;
+  if (err) { logDebug("Action error", actions, err.message); }
       });
     }
   });
