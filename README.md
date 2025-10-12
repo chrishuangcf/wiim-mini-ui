@@ -8,34 +8,272 @@ My initial intention was to build a lovely web app for my WiiM mini devices beca
 
 Song metadata will support **Local DLNA server**, **Spotify**, **Qobuz**, **iHeart Radio**, **tuneIn Radio**, **Deezer** and **Amazon Music**. I am sorry I am currently not a subscriber of **TIDAL**.
 
-## 🚀 Quick Start (Backend Native)
+## 🚀 Quick Start (Native Development - Recommended)
+
+### Prerequisites
+- **Node.js**: Version 18 or higher ([Download](https://nodejs.org/))
+- **npm**: Version 8 or higher (comes with Node.js)
+
+### Initial Setup
 ```bash
-# Install dependencies (frontend + backend)
+# Clone the repository
+git clone https://github.com/chrishuangcf/wiim-mini-ui.git
+cd wiim-mini-ui
+
+# Install dependencies for both frontend and backend
 npm run init
-
-# Terminal 1: start backend (required for UPnP)
-npm run server:dev   # http://localhost:8080
-
-# Terminal 2: start frontend (dev hot reload)
-npm run ui:dev       # http://localhost:5173
-```
-Optional build preview (static bundle only):
-```bash
-npm run build        # outputs web_client/dist
 ```
 
-Optional frontend-only container (backend STILL native):
+### Development Mode (Recommended)
+Run backend and frontend in separate terminals for best development experience:
+
+**Terminal 1 - Backend Server:**
 ```bash
+# Start backend with debug logging enabled
+UPNP_DEBUG=1 npm run server:dev
+# or
+cd wiim_server && UPNP_DEBUG=1 node server.js
+
+# Backend will start on: http://localhost:8080
+# UPnP Discovery: UDP multicast on 239.255.255.250:1900
+```
+
+**Terminal 2 - Frontend Dev Server:**
+```bash
+# Start frontend with hot-reload
+npm run ui:dev
+# or
+cd web_client && npm run dev
+
+# Frontend will start on: http://localhost:5173 (3000 or 3001 if port is busy)
+```
+
+Then open your browser to **http://localhost:5173** (or the port shown in Terminal 2).
+
+### Production Build
+```bash
+# Build the frontend static assets
+npm run build        # outputs to web_client/dist
+
+# Serve both frontend and backend from single server
+cd wiim_server && node server.js
+# Access at: http://localhost:8080
+```
+
+### Optional: Frontend-Only Container
+```bash
+# Build and run frontend in Docker (backend still runs natively)
 npm run ui:docker    # serves built assets at http://localhost:3000
 ```
-> The backend is no longer containerized; docker-compose is not used.
+
+> **Important**: The backend must run natively (not in Docker on macOS/Windows) because UPnP/SSDP multicast traffic (UDP port 1900) is blocked by Docker Desktop's network virtualization. Linux hosts may work with proper Docker network configuration.
+
+---
+
+## 🛠️ Development Environment Setup
+
+### Step 1: Clone and Install Dependencies
+
+```bash
+# Clone the repository
+git clone https://github.com/chrishuangcf/wiim-mini-ui.git
+cd wiim-mini-ui
+
+# Install all dependencies (frontend + backend)
+npm run init
+
+# This is equivalent to:
+# cd web_client && npm install && cd ..
+# cd wiim_server && npm install && cd ..
+```
+
+### Step 2: Verify Installation
+
+```bash
+# Check Node.js version
+node --version  # Should be 18+ (20 or 22 recommended)
+
+# Check backend dependencies
+cd wiim_server && npm list --depth=0
+
+# Expected packages:
+# - express: Web server framework
+# - socket.io: Real-time communication
+# - upnp-device-client: Device control
+# - xml2js: XML parsing
+# - cheerio: HTML/metadata parsing
+
+# Check frontend dependencies  
+cd ../web_client && npm list --depth=0
+
+# Expected packages:
+# - vue: Framework
+# - vuetify: UI components
+# - vite: Build tool
+# - socket.io-client: Backend communication
+```
+
+### Step 3: Configure Environment (Optional)
+
+Create environment files if needed:
+
+**Backend** (`wiim_server/.env`):
+```bash
+# Optional environment variables
+PORT=8080
+UPNP_DEBUG=1
+SSDP_EXPLICIT_BIND=true
+```
+
+**Frontend** (`web_client/.env.development`):
+```bash
+# Backend URL (auto-detected if not set)
+VITE_BACKEND_URL=http://localhost:8080
+
+# Or for remote backend:
+# VITE_BACKEND_URL=http://192.168.1.100:8080
+```
+
+### Step 4: Start Development Servers
+
+#### Option A: Using npm Scripts (Recommended)
+
+```bash
+# Terminal 1 - Backend with debug logging
+npm run server:dev
+# Starts on: http://localhost:8080
+
+# Terminal 2 - Frontend with hot-reload
+npm run ui:dev  
+# Starts on: http://localhost:5173 (or next available port)
+```
+
+#### Option B: Manual Start
+
+```bash
+# Terminal 1 - Backend
+cd wiim_server
+UPNP_DEBUG=1 node server.js
+
+# Terminal 2 - Frontend
+cd web_client
+npm run dev
+```
+
+### Step 5: Verify Everything Works
+
+1. **Check Backend Health**:
+   ```bash
+   curl http://localhost:8080/health
+   # Expected: {"status":"ok","services":{"upnp":{"status":"ok","deviceCount":N}}}
+   ```
+
+2. **Check Device Discovery**:
+   ```bash
+   curl http://localhost:8080/discovery-debug | python3 -m json.tool
+   # Should show discovered MediaRenderer devices
+   ```
+
+3. **Open Frontend**:
+   - Navigate to **http://localhost:5173** in your browser
+   - Health indicator (top-right) should be **green**
+   - Device buttons should appear if media renderers found
+
+4. **Check Browser Console** (F12 or Cmd+Opt+I):
+   ```javascript
+   // Should see:
+   "Socket.io connected"
+   "Received devices: [{friendlyName: 'WiiM Mini-229A', ...}]"
+   ```
+
+### Development Workflow
+
+#### Hot Reload (Frontend)
+- Edit any `.vue`, `.ts`, `.scss` file in `web_client/src/`
+- Changes automatically reflected in browser (usually < 1 second)
+- No manual refresh needed
+
+#### Backend Changes
+- Edit `wiim_server/server.js`
+- Stop backend (Ctrl+C) and restart: `UPNP_DEBUG=1 node server.js`
+- Or use nodemon for auto-restart:
+  ```bash
+  npm install -g nodemon
+  cd wiim_server && nodemon server.js
+  ```
+
+#### Recommended VS Code Extensions
+- **Volar**: Vue.js 3 language support
+- **ESLint**: Code linting
+- **Prettier**: Code formatting
+- **Docker**: Container management (optional)
+
+#### Project Structure
+```
+wiim-mini-ui/
+├── web_client/              # Frontend (Vue.js + Vite)
+│   ├── src/
+│   │   ├── components/      # Vue components (DeviceList, AlbumArt, etc.)
+│   │   ├── views/           # Page views
+│   │   ├── store/           # State management (metadata)
+│   │   ├── router/          # Vue Router config
+│   │   └── constants/       # Constants (deprecated, use env vars)
+│   ├── public/              # Static assets
+│   ├── vite.config.mts      # Vite configuration
+│   └── package.json
+│
+├── wiim_server/             # Backend (Node.js + Express)
+│   ├── server.js            # Main server file
+│   ├── package.json
+│   └── public/              # Built frontend (after npm run build)
+│
+├── package.json             # Root package (npm scripts)
+└── README.md
+```
+
+#### Key Files to Know
+
+**Backend**:
+- `wiim_server/server.js` (lines 62-206): Native dgram SSDP discovery implementation
+- `wiim_server/server.js` (lines 281-315): Socket.io event handlers for device/metadata
+
+**Frontend**:
+- `web_client/src/components/DeviceList.vue`: Device discovery and selection UI
+- `web_client/src/components/AlbumArt.vue`: Main player interface
+- `web_client/src/store/metadata.ts`: Shared state for playback metadata
+- `web_client/vite.config.mts`: Vite proxy configuration for backend API
+
+---
 
 ## ⚙️ Run Modes
-| Mode | Frontend | Backend | UPnP | Notes |
-|------|----------|---------|------|-------|
-| Dev | Vite (5173) | Native 8080 | ✅ | Fast hot reload |
-| Build Preview | Dist via `ui:docker` | Native 8080 | ✅ | Production asset sanity check |
-| Static Deploy | Dist on any web server | Native 8080 (same LAN) | ✅ | Copy `dist/` to host |
+
+| Mode | Frontend | Backend | UPnP | When to Use |
+|------|----------|---------|------|-------------|
+| **Development** | Vite dev server (port 5173) | Native Node.js (port 8080) | ✅ | Active development with hot-reload |
+| **Production Build** | Static files served by Node.js | Native Node.js (port 8080) | ✅ | Single server deployment |
+| **Docker Frontend** | Nginx container (port 3000) | Native Node.js (port 8080) | ✅ | Test production build locally |
+| **Static Deploy** | Any web server (nginx/apache) | Native Node.js (port 8080, same LAN) | ✅ | CDN or separate web server |
+
+### Development Mode (Hot Reload)
+```bash
+# Terminal 1
+UPNP_DEBUG=1 npm run server:dev  # Backend on :8080
+
+# Terminal 2  
+npm run ui:dev                    # Frontend on :5173
+```
+- **Frontend**: Vite dev server with hot module replacement
+- **Backend**: Node.js with automatic device discovery
+- **Best for**: Active development, testing changes immediately
+
+### Production Mode (Single Server)
+```bash
+npm run build                     # Build frontend
+cd wiim_server && node server.js  # Serve everything on :8080
+```
+- **Frontend**: Pre-built static assets served by Express
+- **Backend**: Same Node.js server handles both
+- **Best for**: Deployment to Raspberry Pi or single-server setup
 
 ## 🩺 Health Monitoring
 Backend exposes `/health`; UI chip polls every 10s.
@@ -47,26 +285,270 @@ Colors: Green=OK, Yellow=No devices yet, Red=Backend unreachable.
 ## 🛰️ UPnP Notes (Why Native Backend)
 UPnP/SSDP uses multicast (239.255.255.250:1900 UDP). Desktop container runtimes (macOS/Windows) block this to containers; therefore backend runs directly on the host to see devices. No docker networking configuration is required anymore.
 
-## 🔌 Backend URL Resolution
-Order:
-1. `VITE_BACKEND_URL` env (e.g. `VITE_BACKEND_URL=http://192.168.1.20:8080`)
-2. Page origin
-3. Fallback `http://<host>:8080` after a socket connect error
+## 🔌 Backend URL Configuration & Environment Variables
+
+### Backend URL Resolution (Frontend)
+
+The frontend automatically connects to the backend using this priority order:
+
+1. **`VITE_BACKEND_URL`** environment variable (highest priority)
+   ```bash
+   # Development
+   VITE_BACKEND_URL=http://192.168.1.20:8080 npm run ui:dev
+   
+   # Build time
+   VITE_BACKEND_URL=http://192.168.1.20:8080 npm run build
+   ```
+
+2. **`window.location.origin`** (same host/port as frontend)
+   - Works when frontend and backend served from same server
+   - Production mode: `http://localhost:8080`
+
+3. **Fallback to `http://<host>:8080`** on socket connection error
+   - Automatic retry with backend on port 8080
+   - Only attempts once to avoid infinite loops
+
+### Backend Environment Variables
+
+```bash
+# Port configuration (default: 8080, auto-increments if busy)
+PORT=8080
+
+# Enable comprehensive UPnP/SSDP debug logging
+UPNP_DEBUG=1
+
+# Force explicit network interface binding (if auto-detection fails)
+SSDP_INTERFACES=en0
+
+# Explicitly bind SSDP socket (some systems require this)
+SSDP_EXPLICIT_BIND=true
+```
+
+**Usage:**
+```bash
+# Single command
+UPNP_DEBUG=1 PORT=8080 node wiim_server/server.js
+
+# Or use .env file (create wiim_server/.env)
+PORT=8080
+UPNP_DEBUG=1
+```
+
+### Frontend Environment Variables
+
+Create `web_client/.env.development` or `web_client/.env.production`:
+
+```bash
+# Backend API URL
+VITE_BACKEND_URL=http://localhost:8080
+
+# For development on different machine:
+# VITE_BACKEND_URL=http://192.168.1.100:8080
+
+# For production deployment:
+# VITE_BACKEND_URL=http://your-server-ip:8080
+```
+
+### Common Configuration Scenarios
+
+#### Scenario 1: Local Development (Default)
+No configuration needed. Frontend (5173) → Backend (8080) works automatically.
+
+```bash
+# Terminal 1
+npm run server:dev
+
+# Terminal 2
+npm run ui:dev
+```
+
+#### Scenario 2: Backend on Different Machine
+Development machine A runs frontend, machine B runs backend:
+
+```bash
+# Machine B (192.168.1.100) - Backend
+cd wiim_server && node server.js
+
+# Machine A - Frontend  
+VITE_BACKEND_URL=http://192.168.1.100:8080 npm run ui:dev
+```
+
+#### Scenario 3: Production Build with Custom Backend
+```bash
+# Build frontend pointing to specific backend
+VITE_BACKEND_URL=http://10.0.4.27:8080 npm run build
+
+# Frontend will always connect to 10.0.4.27:8080
+```
+
+#### Scenario 4: Network Interface Selection
+If multiple network interfaces exist and backend binds to wrong one:
+
+```bash
+# List interfaces
+ifconfig  # or "ip addr" on Linux
+
+# Bind to specific interface
+SSDP_INTERFACES=en0 node wiim_server/server.js  # macOS WiFi
+SSDP_INTERFACES=eth0 node wiim_server/server.js # Linux Ethernet
+```
+
+### Vite Proxy Configuration (Development Only)
+
+During development (`npm run ui:dev`), Vite proxies backend requests:
+
+**File**: `web_client/vite.config.mts`
+```typescript
+server: {
+  proxy: {
+    '/socket.io': 'http://localhost:8080',  // WebSocket
+    '/health': 'http://localhost:8080',     // Health check
+    '/api': 'http://localhost:8080'         // API endpoints
+  }
+}
+```
+
+This allows frontend on `:5173` to transparently call backend on `:8080` without CORS issues.
+
+## � Debugging Guide
+
+### Backend Debugging
+
+#### Enable Debug Logging
+```bash
+# Start backend with comprehensive UPnP debug output
+UPNP_DEBUG=1 node wiim_server/server.js
+
+# Debug logs will show:
+# - SSDP socket initialization
+# - Multicast group join (239.255.255.250)
+# - M-SEARCH packet sending
+# - SSDP responses received from devices
+# - Device XML fetching and parsing
+# - MediaRenderer discovery events
+```
+
+#### Check Backend Status
+```bash
+# Verify backend is running
+curl http://localhost:8080/health
+
+# Expected response:
+# {"status":"ok","services":{"upnp":{"status":"ok","deviceCount":2}}}
+
+# View discovered devices in JSON format
+curl http://localhost:8080/discovery-debug | python3 -m json.tool
+
+# Check which process is using port 8080
+lsof -i :8080
+
+# Check if backend is listening on all interfaces
+netstat -an | grep 8080
+```
+
+#### UPnP Network Debugging
+```bash
+# Monitor SSDP multicast traffic (requires sudo)
+sudo tcpdump -i any 'udp port 1900' -A
+
+# Check if devices are advertising on your network
+sudo tcpdump -i any 'udp port 1900 and host 239.255.255.250'
+
+# Send manual M-SEARCH discovery packet
+echo -e "M-SEARCH * HTTP/1.1\r\nHOST: 239.255.255.250:1900\r\nMAN: \"ssdp:discover\"\r\nMX: 3\r\nST: urn:schemas-upnp-org:device:MediaRenderer:1\r\n\r\n" | nc -u 239.255.255.250 1900
+```
+
+#### Common Backend Issues
+
+| Issue | Symptoms | Solution |
+|-------|----------|----------|
+| **Port already in use** | `Error: listen EADDRINUSE: address already in use :::8080` | Kill existing process: `lsof -ti:8080 \| xargs kill -9` |
+| **No devices discovered** | `deviceCount: 0` in `/health` | 1. Verify devices on same network<br>2. Check firewall allows UDP 1900<br>3. Restart media renderer devices |
+| **Multicast not working** | No SSDP responses in `UPNP_DEBUG` logs | 1. Check network interface is up<br>2. Verify multicast routing: `netstat -rn \| grep 224`<br>3. Try explicit interface: `SSDP_INTERFACES=en0 node server.js` |
+| **Socket.io connection fails** | Frontend shows "Backend unreachable" | 1. Verify backend running on 8080<br>2. Check CORS settings<br>3. Verify firewall allows 8080 |
+
+### Frontend Debugging
+
+#### Development Console
+```bash
+# Start frontend with Vite debug output
+DEBUG=vite:* npm run ui:dev
+
+# Open browser DevTools (F12 or Cmd+Opt+I)
+# Check Console tab for:
+# - Socket.io connection status
+# - Device discovery events
+# - API call results
+```
+
+#### Socket.io Connection Issues
+Check browser console for connection attempts:
+```javascript
+// Should see in console:
+"Attempting socket connection to: http://localhost:8080"
+"Socket.io connected"
+"Received devices: [...]"
+```
+
+#### Check Frontend Build
+```bash
+# Verify frontend builds without errors
+cd web_client && npm run build
+
+# Preview production build locally
+npm run preview
+```
+
+#### Common Frontend Issues
+
+| Issue | Symptoms | Solution |
+|-------|----------|----------|
+| **Backend unreachable** | Red health indicator, no devices | 1. Verify backend running: `curl http://localhost:8080/health`<br>2. Check backend URL in DevTools Network tab<br>3. Set explicit URL: `VITE_BACKEND_URL=http://localhost:8080 npm run ui:dev` |
+| **Devices not displayed** | Empty device list | 1. Open browser console, check for socket errors<br>2. Click "Refresh" button<br>3. Verify `/discovery-debug` shows devices |
+| **Port conflict** | `Port 5173 is in use` | Vite auto-increments port (3000→3001→3002), check terminal output |
+| **Hot reload not working** | Changes not reflected | 1. Check Vite terminal for errors<br>2. Hard refresh browser (Cmd+Shift+R)<br>3. Restart dev server |
+
+### Network Debugging Commands
+
+```bash
+# View all network interfaces
+ifconfig
+
+# Check multicast group membership (macOS)
+netstat -g
+
+# Find your local IP address
+hostname -I  # Linux
+ipconfig getifaddr en0  # macOS WiFi
+ipconfig getifaddr en1  # macOS Ethernet
+
+# Test backend from another device on LAN
+curl http://[YOUR_IP]:8080/health
+
+# Monitor WebSocket connections
+lsof -i :8080 -n | grep ESTABLISHED
+
+# Check DNS resolution
+nslookup localhost
+```
+
+### Debugging Tips
+
+1. **Always check both terminals**: Backend (8080) and Frontend (5173) logs
+2. **Enable UPNP_DEBUG**: Reveals exactly what the backend sees on the network
+3. **Use `/discovery-debug` endpoint**: Quick way to see parsed device data
+4. **Check browser DevTools Network tab**: Shows all HTTP/WebSocket traffic
+5. **Verify same network**: Both devices and development machine must be on same LAN
+6. **Firewall**: Ensure UDP 1900 and TCP 8080 are not blocked
 
 ## 🔍 Quick Troubleshooting
 | Issue | Cause | Action |
 |-------|-------|--------|
-| Chip red | Backend not started | `npm run server:dev` |
-| 0 devices | Device offline / multicast delay | Ensure same LAN, wait few sec, restart device |
+| Chip red | Backend not started | `UPNP_DEBUG=1 npm run server:dev` |
+| 0 devices | Device offline / multicast delay | 1. Ensure same LAN<br>2. Wait 15 seconds<br>3. Restart device<br>4. Check `UPNP_DEBUG` logs |
 | Frontend no data | Wrong backend URL | Set `VITE_BACKEND_URL` explicitly |
-| Socket errors | Transient network | Page reload or wait reconnect |
-
-## 🧪 Helpful Commands
-```bash
-curl http://localhost:8080/health
-lsof -i :8080
-sudo tcpdump -i any 'udp port 1900'
-```
+| Socket errors | Transient network | Page reload or wait for reconnect |
+| Build fails | Dependency issues | `rm -rf node_modules && npm run init` |
 
 ## 🏗️ Architecture Overview
 
@@ -276,17 +758,23 @@ Both services run on a shared bridge network (`wiim-network`), allowing them to 
 
 ## 📋 Prerequisites
 
-Choose one of the following setups:
+### Required
+- **Node.js**: Version 18+ ([Download](https://nodejs.org/))
+  - Recommended: Node.js 20 or 22 LTS
+  - Check version: `node --version`
+- **npm**: Version 8+ (included with Node.js)
+  - Check version: `npm --version`
 
-### Option 1: Docker (Recommended)
-- **Docker Desktop**: [Download and install](https://www.docker.com/products/docker-desktop/)
+### Optional
+- **Docker Desktop**: For frontend container builds only ([Download](https://www.docker.com/products/docker-desktop/))
+  - Note: Backend cannot run in Docker on macOS/Windows due to multicast limitations
+- **Python 3**: For debugging tools (JSON formatting)
+  - Usually pre-installed on macOS/Linux
 
-### Option 2: Manual Installation
-- **Node.js**: Version 18 or higher ([Download](https://nodejs.org/))
-  - Backend requires Node.js 20 for best compatibility
-- **Package Manager**: 
-  - Yarn ([Install](https://classic.yarnpkg.com/lang/en/docs/install/)) or
-  - npm (comes with Node.js)
+### Network Requirements
+- **UPnP/SSDP**: Your network must allow multicast UDP on 239.255.255.250:1900
+- **Same Network**: Development machine and media renderers must be on same LAN/WiFi
+- **Firewall**: Allow incoming TCP 8080 (backend), UDP 1900 (SSDP)
 
 ---
 
@@ -331,7 +819,7 @@ These commands will first build the web app into a bundled, minified package. Th
 
 ---
 
-**IMPORTRANT** The web app had a hard coded "server" location inside of /web_client/constants/Constants.ts file. Please change **SERVER_URL** and **SERVER_PORT** accordingly.
+**DEPRECATED**: The old hard-coded server location in `/web_client/constants/Constants.ts` is no longer used. The frontend now uses environment variables (`VITE_BACKEND_URL`) and automatic URL detection. See **[🔌 Backend URL Configuration](#-backend-url-configuration--environment-variables)** above for modern configuration.
 
 ---
 
