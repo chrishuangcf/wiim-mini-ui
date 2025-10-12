@@ -6,11 +6,16 @@ import SongSpecs from "@/components/SongSpecs.vue";
 import Biography from "@/components/Biography.vue";
 import ServerUrl from "@/components/ServerUrl.vue";
 import DeviceList from "@/components/DeviceList.vue";
+import HealthIndicator from "@/components/HealthIndicator.vue";
 import CoverArt from "@/assets/cover.jpg";
 </script>
 
 <template>
   <v-container fluid>
+    <!-- Health Indicator in top-right corner -->
+    <div class="health-indicator-container">
+      <HealthIndicator />
+    </div>
     <v-row dense>
       <v-col cols="12">
         <v-card color="#263238" theme="dark">
@@ -159,6 +164,7 @@ export default {
     Biography,
     DeviceList,
     ServerUrl,
+    HealthIndicator,
   },
   created() {
     this.fetchDeviceList();
@@ -253,3 +259,12 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+.health-indicator-container {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 1000;
+}
+</style>

@@ -6,7 +6,75 @@ The goal of this project is to build a Web Control Point to display "Now Playing
 
 My initial intention was to build a lovely web app for my WiiM mini devices because I missed so much from volumio, logitech media server or roon. Hence, the project name was "WiiM mini UI". Since the web app does interact with all Media Renderers on your system. (As long as it supports proper UPnP. (Sorry for OpenHome users. I'll put that into my to-do list))
 
-Song metata will support **Local DLNA server**, **Spotify**, **Qobuz**, **iHeart Radio**, **tuneIn Radio**, **Deezer** and **Amazon Music**. I am sorry I am currently not a subscriber of **TIDAL**.
+Song metadata will support **Local DLNA server**, **Spotify**, **Qobuz**, **iHeart Radio**, **tuneIn Radio**, **Deezer** and **Amazon Music**. I am sorry I am currently not a subscriber of **TIDAL**.
+
+## 🚀 Quick Start
+
+```bash
+# Install dependencies
+npm run init
+
+# Terminal 1: Backend (required for UPnP)
+npm run server:dev   # http://localhost:8080
+
+# Terminal 2: Frontend (choose one)
+# Dev (hot reload):
+npm run ui:dev       # http://localhost:5173
+# OR production container:
+npm run ui:docker    # http://localhost:3000
+```
+
+Health chip (top-right) should turn green when backend is reachable. Click it for uptime, device count, selected device and errors.
+
+## ⚙️ Run Modes
+| Mode | Frontend | Backend | UPnP Discovery | Use Case |
+|------|----------|---------|----------------|----------|
+| Dev (recommended) | Vite (5173) | Native | ✅ Full | Active development |
+| Hybrid | Docker (3000) | Native | ✅ Full | Test prod build |
+| Docker-only (macOS/Win) | Docker | Docker | ❌ None | Not supported for UPnP |
+| Linux Full Docker | Docker | Host net (Linux only) | ✅ Full | Production / Pi |
+
+## 🩺 Health Monitoring
+Backend `/health` endpoint returns:
+```json
+{ "status": "ok", "uptime": 123, "services": { "upnp": {"status": "ok","deviceCount": 2}, "selectedDevice": {"status": "connected"}} }
+```
+Component polls every 10s. Colors: Green=OK, Yellow=Degraded / no devices yet, Red=Offline.
+
+## 🛰️ UPnP & Docker Limitations (macOS / Windows)
+Multicast SSDP (239.255.255.250:1900 UDP) does not reach containers under Docker Desktop. `network_mode: host` is emulated and cannot expose your real NIC, so backend in Docker cannot discover devices. Solution: run backend natively. On Linux you may use `network_mode: host` for full discovery.
+
+### Summary
+- macOS / Windows: Backend must be native for UPnP.
+- Linux / Raspberry Pi: Host networking Docker works.
+- Macvlan is possible but overkill; not recommended for this project.
+
+## 🔍 Quick Health Checklist
+| Symptom | Likely Cause | Fix |
+|---------|--------------|-----|
+| Health chip red | Backend not started | Run `npm run server:dev` |
+| Health green, 0 devices | UPnP blocked / device offline | Ensure same LAN, restart device, check firewall UDP 1900 |
+| Frontend fails to load data | Wrong port / backend stopped | Verify 8080 alive with `curl http://localhost:8080/health` |
+| Socket errors | Backend restart or network blip | Wait auto-retry / reload page |
+
+## 🧪 Useful Commands
+```bash
+# Backend health
+curl http://localhost:8080/health
+
+# Watch SSDP traffic (macOS needs sudo)
+sudo tcpdump -i any 'udp port 1900'
+
+# List process using backend port
+lsof -i :8080
+```
+
+## 🛠 Troubleshooting Flow
+1. Health chip color?
+2. `curl http://localhost:8080/health` → reachable?
+3. Device count = 0 → check network + firewall + restart renderer.
+4. Still failing → run backend natively (if not already).
+5. Check console logs (backend & browser DevTools).
 
 ---
 

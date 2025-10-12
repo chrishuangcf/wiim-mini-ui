@@ -1,24 +1,27 @@
 # Docker Compose configuration for WiiM Mini UI
 # 
+# SIMPLIFIED ARCHITECTURE:
+# - Frontend: Runs in Docker (nginx serving static files)
+# - Backend: Runs NATIVELY on host machine for UPnP/SSDP access
+#
+# WHY THIS APPROACH?
+# - UPnP discovery requires multicast network access
+# - Docker containers cannot receive multicast on macOS/Windows
+# - Backend must run natively to discover WiiM devices
+# - Frontend is just static files, perfect for Docker
+#
+# USAGE:
+# 1. Start backend natively:  npm run server:dev
+# 2. Start frontend in Docker: docker compose up -d
+# 3. Access at: http://localhost:3000
+#
 # SSL Certificate Support:
-# Both frontend and backend containers are configured to handle SSL certificates
-# for corporate/enterprise environments that use custom Certificate Authorities.
-# 
-# The containers mount the ~/.ssh directory (read-only) which can contain:
-# - Custom CA certificates
-# - SSL certificates for HTTPS connections
-# - Any other certificate files needed for secure communications
-#
-# Environment variables set for SSL:
-# - NODE_EXTRA_CA_CERTS: Additional CA certificates for Node.js
-# - SSL_CERT_FILE: SSL certificate file location
-# - NPM_CONFIG_CAFILE: CA file for npm operations
-# - NODE_TLS_REJECT_UNAUTHORIZED: Set to "0" to allow self-signed certificates
-#
-# To use specific certificates, uncomment and modify the volume mounts below.
+# Frontend container is configured to handle SSL certificates for
+# corporate/enterprise environments that use custom Certificate Authorities.
 
 services:
   # Frontend - Vue.js application served by nginx
+  # Static files only, proxies API calls to backend running on host
   frontend:
     build:
       context: ./web_client
@@ -27,12 +30,11 @@ services:
         NODE_TLS_REJECT_UNAUTHORIZED: "0"
     container_name: wiim-frontend
     ports:
-      - "3000:80"
-    depends_on:
-      - backend
-    networks:
-      - wiim-network
+      - "3000:80"  # Frontend accessible at http://localhost:3000
     restart: unless-stopped
+    extra_hosts:
+      # Allow container to reach backend on host machine
+      - "host.docker.internal:host-gateway"
     environment:
       NODE_ENV: "production"
       NODE_EXTRA_CA_CERTS: /usr/local/share/ca-certificates/custom-ca.crt
@@ -44,38 +46,11 @@ services:
       - ~/.ssh:/root/.ssh:ro
       # If you have specific cert files, mount them directly:
       # - ~/.ssh/your-cert.crt:/usr/local/share/ca-certificates/custom-ca.crt:ro
-      # - ~/.ssh/your-cert.pem:/usr/local/share/ca-certificates/custom-ca.crt:ro
 
-  # Backend - Node.js server
-  backend:
-    build:
-      context: ./wiim_server
-      dockerfile: dockerfile.latest
-      args:
-        NODE_TLS_REJECT_UNAUTHORIZED: "0"
-    container_name: wiim-backend
-    ports:
-      - "8080:8080"
-      - "8200:8200/tcp"
-      - "1900:1900/udp"
-    networks:
-      - wiim-network
-    restart: unless-stopped
-    environment:
-      NODE_ENV: "production"
-      NODE_EXTRA_CA_CERTS: /usr/local/share/ca-certificates/custom-ca.crt
-      SSL_CERT_FILE: /usr/local/share/ca-certificates/custom-ca.crt
-      NPM_CONFIG_CAFILE: /usr/local/share/ca-certificates/custom-ca.crt
-      NODE_TLS_REJECT_UNAUTHORIZED: "0"
-    volumes:
-      # Mount SSL certificates from ~/.ssh folder
-      - ~/.ssh:/root/.ssh:ro
-      # If you have specific cert files, mount them directly:
-      # - ~/.ssh/your-cert.crt:/usr/local/share/ca-certificates/custom-ca.crt:ro
-      # - ~/.ssh/your-cert.pem:/usr/local/share/ca-certificates/custom-ca.crt:ro
-      # Uncomment below to mount server.js for development
-      # - ./wiim_server/server.js:/app/server.js
-
-networks:
-  wiim-network:
-    driver: bridge
+# WORKFLOW:
+# 1. Backend (native):  npm run server:dev          (port 8080)
+# 2. Frontend (Docker): docker compose up -d        (port 3000)
+# 3. Open browser:      http://localhost:3000
+#
+# Backend must be running natively for UPnP device discovery to work!
+# Frontend in Docker will proxy all /api and /socket.io requests to host.docker.internal:8080

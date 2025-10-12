@@ -26,6 +26,28 @@ let devices = {};
 let devicesByLocation = [];
 let selectedDevice = undefined;
 var upnpClient = undefined;
+let serverStartTime = Date.now();
+
+// ==================== Health Check Endpoint ====================
+app.get("/health", (req, res) => {
+  const uptime = Math.floor((Date.now() - serverStartTime) / 1000);
+  const health = {
+    status: "ok",
+    uptime: uptime,
+    timestamp: new Date().toISOString(),
+    services: {
+      upnp: {
+        status: devicesByLocation.length > 0 ? "ok" : "no_devices",
+        deviceCount: devicesByLocation.length,
+      },
+      selectedDevice: {
+        status: selectedDevice ? "connected" : "not_selected",
+        device: selectedDevice || null,
+      },
+    },
+  };
+  res.json(health);
+});
 
 // ==================== pulling upnp devices ====================
 ssdpClient.search("ssdp:all");

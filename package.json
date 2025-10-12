@@ -5,12 +5,15 @@
     "private": true,
     "main": "server.js",
     "scripts": {
-        "init": "cd web_client && sudo npm install && cd .. && cd wiim_server && sudo npm install && cd ..",
+        "init": "cd web_client && npm install && cd .. && cd wiim_server && npm install && cd ..",
         "ui:dev": "cd web_client && npm run dev",
+        "ui:docker": "docker compose up -d --build && echo '\nFrontend running at http://localhost:3000'",
+        "ui:docker:stop": "docker compose down",
         "server:dev": "cd wiim_server && npm run serve",
         "build": "cd web_client && npm run build",
         "serve": "rm -rf ./wiim_server/public && cp -R ./web_client/dist ./wiim_server/public && cd wiim_server && npm run serve",
-        "serve:ui": "npm run build && npm run serve"
+        "serve:ui": "npm run build && npm run serve",
+        "dev": "echo 'Start backend: npm run server:dev (in one terminal)' && echo 'Start frontend: npm run ui:dev OR npm run ui:docker (in another terminal)'"
     },
     "repository": "git+https://github.com/chrishuangcf/wiim-mini-ui.git",
     "author": "Chris Huang",
