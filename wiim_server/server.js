@@ -158,6 +158,7 @@ let discoveryStats = {
 function fetchAndRegisterDevice(location) {
   // Avoid re-fetching same location
   if (devicesByLocation.find((d) => d.location === location)) {
+    logDebug("Device already registered, skipping", location);
     return;
   }
   const protocol = location.startsWith("https") ? https : http;
@@ -183,6 +184,13 @@ function fetchAndRegisterDevice(location) {
             const udnRaw = device.UDN ? device.UDN[0] : "";
             const uuid = udnRaw.replace("uuid:", "");
             if (!uuid) return;
+            
+            // Check again if device was already added (race condition protection)
+            if (devices[uuid]) {
+              logDebug("Device UUID already exists, skipping", uuid);
+              return;
+            }
+            
             const friendlyName = device.friendlyName ? device.friendlyName[0] : "";
             const manufacturer = device.manufacturer ? device.manufacturer[0] : "";
             const deviceInfo = { location, manufacturer };
@@ -445,11 +453,15 @@ io.on("connection", (socket) => {
 function startServer(port = 8081, maxAttempts = 5) {
   webServer.listen(port, () => {
     const addr = webServer.address();
+    const actualPort = addr && addr.port;
     console.log(
-      "Web Server started at http://localhost:%s%s",
-      addr && addr.address !== '::' ? addr.address : 'localhost',
-      addr && addr.port
+      "Web Server started at http://localhost:%s",
+      actualPort
     );
+    if (actualPort !== 8081) {
+      console.log("⚠️  WARNING: Server running on port %s instead of 8081", actualPort);
+      console.log("   Update frontend VITE_BACKEND_URL or restart after killing port 8081 process");
+    }
   });
   webServer.on('error', (err) => {
     if (err.code === 'EADDRINUSE' && maxAttempts > 0) {

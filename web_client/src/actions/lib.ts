@@ -38,7 +38,8 @@ export class Utilities {
         // fallback attempt if user opened frontend on different port
         if (!ENV_BACKEND && this.serverUrl === window.location.origin) {
           this.serverUrl = `${window.location.protocol}//${window.location.hostname}:8080`;
-          this.socket?.io.reconnect();
+          this.socket?.disconnect();
+          this.connect();
         }
       });
     } catch (e) {
@@ -54,10 +55,11 @@ export class Utilities {
 
   async fetchDeviceList() {
     return new Promise<deviceListType>((resolve, reject) => {
-      if (this.socket) {
-        this.socket.emit("devices");
-        this.socket.on("devices", (data: deviceListType) => {
-          this.socket.off("devices");
+      const socket = this.socket;
+      if (socket) {
+        socket.emit("devices");
+        socket.on("devices", (data: deviceListType) => {
+          socket.off("devices");
           resolve(data);
         });
       }
@@ -66,10 +68,11 @@ export class Utilities {
 
   fetchMetadata() {
     return new Promise<metadataType>((resolve, reject) => {
-      if (this.socket) {
-        this.socket.emit("metadata");
-        this.socket.on("metadata", (data: any) => {
-          this.socket.off("metadata");
+      const socket = this.socket;
+      if (socket) {
+        socket.emit("metadata");
+        socket.on("metadata", (data: any) => {
+          socket.off("metadata");
           resolve(this.updateMetadata(data));
         });
       }
@@ -77,25 +80,28 @@ export class Utilities {
   }
 
   postInit(url: string) {
-    this.socket.emit("init", url);
+    this.socket?.emit("init", url);
   }
 
   postPlayerActions(playerAction: string) {
     return new Promise<string>((resolve, reject) => {
-      if (this.socket) {
-        if (this.serverUrl)
-          this.socket.emit("actions", playerAction);
-          this.socket.on("actions", (data: any) => {
-            this.socket.off("actions");
+      const socket = this.socket;
+      if (socket) {
+        if (this.serverUrl) {
+          socket.emit("actions", playerAction);
+          socket.on("actions", (data: any) => {
+            socket.off("actions");
             resolve(data);
           });
+        }
       }
     });
   }
 
   async fetchBiography() {
     return new Promise<string>((resolve, reject) => {
-      if (this.socket) {
+      const socket = this.socket;
+      if (socket) {
         if (this.serverUrl) {
           const artist = this.urlDecode(this.data.artist);
           // const album = this.urlDecode(this.data.albumTitle);
@@ -110,9 +116,9 @@ export class Utilities {
             return "";
           }
 
-          this.socket.emit("biography", artist);
-          this.socket.on("biography", (data: any) => {
-            this.socket.off("biography");
+          socket.emit("biography", artist);
+          socket.on("biography", (data: any) => {
+            socket.off("biography");
 
             if (data !== "no data") {
               localStorage.setItem(artist, data);

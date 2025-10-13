@@ -44,7 +44,7 @@ Run backend and frontend in separate terminals:
 **Terminal 1 - Backend:**
 ```bash
 UPNP_DEBUG=1 npm run server:dev
-# Runs on http://localhost:8080
+# Runs on http://localhost:8081
 ```
 
 **Terminal 2 - Frontend:**
@@ -92,7 +92,7 @@ wiim-mini-ui/
 
 **Backend** (`wiim_server/.env`):
 ```bash
-PORT=8080              # Server port (default: 8080)
+PORT=8081              # Server port (default: 8081)
 UPNP_DEBUG=1          # Enable UPnP/SSDP debug logging
 SSDP_INTERFACES=en0   # Specific network interface (optional)
 SSDP_EXPLICIT_BIND=true  # Explicit socket binding (optional)
@@ -101,17 +101,17 @@ SSDP_EXPLICIT_BIND=true  # Explicit socket binding (optional)
 **Frontend** (`web_client/.env.development`):
 ```bash
 # Backend URL (auto-detected if not set)
-VITE_BACKEND_URL=http://localhost:8080
+VITE_BACKEND_URL=http://localhost:8081
 ```
 
 ### Verification Steps
 
 ```bash
 # 1. Check backend health
-curl http://localhost:8080/health
+curl http://localhost:8081/health
 
 # 2. View discovered devices
-curl http://localhost:8080/discovery-debug | python3 -m json.tool
+curl http://localhost:8081/discovery-debug | python3 -m json.tool
 
 # 3. Open browser to http://localhost:5173
 # - Health indicator (top-right) should be green
@@ -135,9 +135,9 @@ curl http://localhost:8080/discovery-debug | python3 -m json.tool
 
 | Mode | Frontend | Backend | When to Use |
 |------|----------|---------|-------------|
-| **Development** | Vite dev server (:5173) | Native Node.js (:8080) | Active development with hot-reload |
+| **Development** | Vite dev server (:5173) | Native Node.js (:8081) | Active development with hot-reload |
 | **Production** | Static files via Node.js | Native Node.js (:8080) | Single server deployment (Raspberry Pi, etc.) |
-| **Docker Frontend** | Nginx container (:3000) | Native Node.js (:8080) | Test production build locally |
+| **Docker Frontend** | Nginx container (:3000) | Native Node.js (:8081) | Test production build locally |
 
 ## 🩺 Health Monitoring
 
@@ -179,12 +179,12 @@ npm run ui:dev      # Terminal 2
 cd wiim_server && node server.js
 
 # Machine A - Frontend
-VITE_BACKEND_URL=http://192.168.1.100:8080 npm run ui:dev
+VITE_BACKEND_URL=http://192.168.1.100:8081 npm run ui:dev
 ```
 
 **Production Build with Custom Backend**
 ```bash
-VITE_BACKEND_URL=http://10.0.4.27:8080 npm run build
+VITE_BACKEND_URL=http://10.0.4.27:8081 npm run build
 ```
 
 **Network Interface Selection**
@@ -207,10 +207,10 @@ UPNP_DEBUG=1 node wiim_server/server.js
 
 ```bash
 # Check backend health
-curl http://localhost:8080/health
+curl http://localhost:8081/health
 
 # View discovered devices
-curl http://localhost:8080/discovery-debug | python3 -m json.tool
+curl http://localhost:8081/discovery-debug | python3 -m json.tool
 
 # Monitor SSDP traffic (requires sudo)
 sudo tcpdump -i any 'udp port 1900' -A
@@ -220,15 +220,15 @@ sudo tcpdump -i any 'udp port 1900' -A
 
 | Issue | Solution |
 |-------|----------|
-| **Port already in use** | `lsof -ti:8080 \| xargs kill -9` |
+| **Port already in use** | `lsof -ti:8081 \| xargs kill -9` |
 | **No devices discovered** | 1. Check same network<br>2. Allow UDP 1900 in firewall<br>3. Restart renderer devices<br>4. Try `SSDP_INTERFACES=en0 node server.js` |
-| **Backend unreachable** | 1. Verify backend running: `curl http://localhost:8080/health`<br>2. Check firewall allows TCP 8080<br>3. Set `VITE_BACKEND_URL` explicitly |
+| **Backend unreachable** | 1. Verify backend running: `curl http://localhost:8081/health`<br>2. Check firewall allows TCP 8081<br>3. Set `VITE_BACKEND_URL` explicitly |
 | **Hot reload not working** | Hard refresh browser (Cmd+Shift+R) or restart dev server |
 | **Build fails** | `rm -rf node_modules && npm run init` |
 
 ### Debugging Tips
 
-- Check both terminal outputs (backend :8080, frontend :5173)
+- Check both terminal outputs (backend :8081, frontend :5173)
 - Use browser DevTools (F12) to inspect Network tab
 - Verify devices and dev machine on same LAN
 - Use `/discovery-debug` endpoint to see parsed device data
