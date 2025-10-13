@@ -23,6 +23,6 @@
     },
     "homepage": "https://github.com/chrishuangcf/wiim-mini-ui#readme",
     "devDependencies": {
-        "typescript": "^4.7.4"
+        "typescript": "^5.9.3"
     }
 }

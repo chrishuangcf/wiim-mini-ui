@@ -89,12 +89,11 @@
         <v-row align="center" justify="center">
           <v-col cols="12">
             <v-progress-linear
-              model-value=props.currentPos
+              :model-value="props.currentPos"
               color="purple-lighten-2"
               buffer-value="0"
               stream
-              reactive
-              rounded-bar
+              height="6"
             ></v-progress-linear>
           </v-col>
         </v-row>

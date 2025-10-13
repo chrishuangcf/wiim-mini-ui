@@ -9,15 +9,19 @@
         "docker:run": "docker run -d --rm --name wiim_service -p 127.0.0.1:8081:8081 wiim_ui"
     },
     "dependencies": {
-        "node-ssdp": "^1.0.0",
+        "ip": "^2.0.1",
+        "node-ssdp": "^4.0.1",
         "socket.io": "^4.5.1",
         "upnp-client": "^0.0.1"
     },
     "devDependencies": {
         "cheerio": "^1.0.0-rc.12",
-        "express": "^4.18.1",
+        "express": "^5.1.0",
         "upnp-device-client": "^1.0.2",
         "xml2js": "^0.6.2"
+    },
+    "overrides": {
+        "ip": "^2.0.1"
     },
     "eslintConfig": {
         "root": true,
