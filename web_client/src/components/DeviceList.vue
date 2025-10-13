@@ -21,8 +21,24 @@
         </v-btn>
       </v-btn-toggle>
     </div>
-    <div v-else class="d-flex align-center" style="margin-top: 1em">
-      <span>No devices found. Click the speaker icon to refresh.</span>
+    <div v-else class="d-flex align-center justify-center" style="margin-top: 1em; margin-bottom: 1em">
+      <v-alert
+        type="info"
+        variant="tonal"
+        density="compact"
+        class="no-devices-alert"
+      >
+        <template v-slot:prepend>
+          <v-icon size="large">mdi-speaker-off</v-icon>
+        </template>
+        <div class="d-flex align-center">
+          <span class="text-body-2">
+            No devices found. Click the 
+            <v-icon size="small" class="mx-1">mdi-speaker</v-icon>
+            speaker icon to refresh.
+          </span>
+        </div>
+      </v-alert>
     </div>
   </div>
 </template>
@@ -108,3 +124,14 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+.no-devices-alert {
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.no-devices-alert :deep(.v-alert__prepend) {
+  align-self: center;
+}
+</style>

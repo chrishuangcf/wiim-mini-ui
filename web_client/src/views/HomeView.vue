@@ -74,9 +74,6 @@ import CoverArt from "@/assets/cover.jpg";
                     color="#424242"
                   />
                 </div>
-                <div class="d-flex mt-2">
-                  <HealthIndicator />
-                </div>
               </v-card>
             </v-col>
           </div>
